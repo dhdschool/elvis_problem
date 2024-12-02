@@ -35,16 +35,31 @@ import Data.Singletons
 precision_ :: Num a => a
 precision_ = 25
 
-approx_ :: (RealVec (Vec n) a) => Integer -> (Vec n a -> a) -> Vec n a -> a -> a
-approx_ b f v p
-    | b >= precision_ = 0
-    | f (p|*|v) > 0 = approx_  (b+1) f v (p - dp) - (dp)
-    | f (p|*|v) < 0 = approx_  (b+1) f v (p + dp) + (dp)
-    | otherwise = 0 where
-        dp = (1/(2^b))
+-- Exponetially searches until past edge of the set
+approx_find_ :: (RealVec (Vec n) a) => a -> (Vec n a -> a) -> Vec n a -> Vec n a
+approx_find_ b f v 
+    | f (b |*| v) > 0 = approx_ 2 f v (b/2)
+    | otherwise = approx_find_ (b*2) f v
 
-approx :: (RealVec (Vec n) a) => (Vec n a -> a) -> Vec n a -> a
-approx f v = (1/2) + approx_ 2 f v (1/2)
+-- Binary search to find edge of set once past
+approx_ :: (RealVec (Vec n) a) => Integer -> (Vec n a -> a) -> Vec n a -> a -> Vec n a
+approx_ b f v p
+    | b >= precision_ = v
+    | f (p|*|v) > 0 = approx_  (b+1) f (v |-| v_prime) (p/2)
+    | f (p|*|v) < 0 = approx_  (b+1) f (v |+| v_prime) (p/2)
+    | otherwise = v
+        where v_prime = (p/2) |*| v
+
+-- Public wrapper
+approx :: (RealVec (Vec n) a) => (Vec n a -> a) -> Vec n a -> Vec n a
+approx f v = (approx_find_ 1 f v)
+
+-- Diagonal center bisector for given set
+directional_identification :: (RealVec (Vec n) a, SingI n) => (Vec n a -> a) -> Vec n a
+directional_identification f = v where
+    positive_diag = foldr (|+|) zeroVecs (generate (\i -> approx f (index i baseVecs)))
+    negative_diag = foldr (|+|) zeroVecs ((zeroVecs|-|) <$> (generate (\i -> approx f (index i baseVecs))))
+    v = positive_diag |-| negative_diag
 
 test_func :: Vec (Lit 2) Float -> Float
 test_func v = (index (FZ) v)**2 + (index (FS FZ) v)**2 - 1
@@ -52,18 +67,6 @@ test_func v = (index (FZ) v)**2 + (index (FS FZ) v)**2 - 1
 test_v :: Vec (Lit 2) Float
 test_v = 1:#1:#Nil
 
+ds :: (RealVec (Vec n) a) => Vec n a -> Vec n a -> a
+ds x0 x = norm $ x |-| x0
 
-
-set_edge :: (RealVec (Vec n) a) => (Vec n a -> a) -> Vec n a -> Vec n a
-set_edge f v = (approx (f) v) |*| v 
-
-outer_distance :: (RealVec (Vec n) a) => (Vec n a -> a) -> Vec n a -> a
-outer_distance f v = norm $ v |-| (set_edge f v)
-
---theta :: (RealVec (Vec n) a) => Vec n a -> a
---theta v = v <.> (index)
-
--- proj = v - r cos(alpha)
--- distance = 2 * sin(theta) * cos(theta) * norm(v - r)
--- alpha = (pi / 2) - 2 * theta
--- theta = (v <.> e1) / (norm v)
