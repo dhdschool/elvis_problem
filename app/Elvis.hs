@@ -118,13 +118,13 @@ contains_inter = \case
     (l1, SS l2) -> \v -> \(f:#fs) -> ((contains_add $ f <*> (pure v)) <=0) && contains_inter (l1, l2) v fs
 
 
-distance_ :: (RealFloat a) => VSet m n a -> Vec n a -> a
+--distance_ :: (RealFloat a) => VSet m n a -> Vec n a -> a
 
 
 instance (SingI m, SingI n) => CSet m n where
     contains v f = contains_inter (sing, sing) v f
     intersection f1 f2 = (f1 |++| f2)
-    distance 
+    --distance 
     --add f1 f2 = f1 <*> ((++) <$> f2)
 
     

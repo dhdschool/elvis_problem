@@ -64,6 +64,7 @@ executable Elvis-Problem
     other-modules:
         Elvis
         FixedVector
+        Proj
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

@@ -46,12 +46,13 @@ type family Lit (n :: GHC.TypeLits.Nat) :: Nat where
     Lit 0 = Z
     Lit n = S (Lit (n GHC.TypeLits.- 1)) 
 
+type Dim n = Fin (Lit n)
 
 data Fin :: Nat -> Type where
     FZ :: Fin ('S n)
     FS :: Fin n -> Fin ('S n)
 deriving instance Show (Fin n)
-
+ 
 data Vec :: Nat -> Type -> Type where
     Nil :: Vec 'Z a
     (:#) :: a -> Vec n a -> Vec ('S n) a
