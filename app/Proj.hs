@@ -74,10 +74,10 @@ directional_identification f = v where
     v = x |-| ((1/2) |*| z)
 
 
-test_func :: Vec (Lit 2) Float -> Float
+test_func :: Vec (Lit 2) R -> R
 test_func v = (index (FZ) v)**2 + (((index (FS FZ) v) + 1)**2)/4 - 1
 
-test_v :: Vec (Lit 2) Float
+test_v :: Vec (Lit 2) R
 test_v = 1:#1:#Nil
 
 --proj :: (RealVec (Vec n) a, SingI n) => (Vec n a -> a) -> Vec n a -> Vec n a
