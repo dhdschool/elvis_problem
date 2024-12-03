@@ -32,9 +32,9 @@ import FixedVector
 import Data.Singletons
 import Data.Kind (Type)
 import Data.Foldable
-import Data.Number.CReal
+import Data.Number.BigFloat
 
-type R = CReal
+type R = BigFloat Prec10
 
 precision :: R
 precision = 8

@@ -33,7 +33,7 @@ import Elvis
 import Data.Singletons
 
 precision_ :: R
-precision_ = 25
+precision_ = 5
 
 recentered_approx :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 recentered_approx g x = up (approx g_prime x_prime) where
@@ -105,24 +105,28 @@ toward_y grad_g r x = ((grad (delf r x)) r) |+| (grad_g r)
 -- private wrapper
 -- x is assumed to be recentered
 estimate_y :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
-estimate_y g x = estimate_y_find_ 0 (getAngle r (grad_g r)) g r x where
+estimate_y g x = estimate_y_find_ 0 g r x where
     r = approx g x
-    grad_g = grad g
 
-estimate_y_find_ :: (RealVec (Vec n R), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R
-estimate_y_find_ episilon theta g y0 x
-    | theta_new - theta > 0 = estimate_y_find_ (episilon + 1) (theta_new) g y x
-    | theta_new - theta <= 0 = estimate_y_ 0 (2 ** (episilon-1)) g y x
+estimate_y_find_ :: (RealVec (Vec n R), SingI n) => R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R
+estimate_y_find_ episilon g y0 x
+    | theta_plus == (pi/2) = y_plus
+    | theta_minus == (pi/2) = y_minus
+    | theta_minus == theta_plus = y0
+    | theta_plus > theta_minus = estimate_y_find_ (episilon + 1) g y_plus x
+    | theta_minus > theta_plus = estimate_y_ 0 (2 ** (episilon-1)) g y0 x
     | otherwise = y0 where
         mult_factor = 2 ** episilon
-        theta_new = getAngle (grad_g y) y
-        y = approx g (y0 |-| (mult_factor |*| (toward_y grad_g y0 x)))
+        theta_plus = getAngle (grad_g y_plus) y_plus
+        theta_minus = getAngle (grad_g y_minus) y_minus
+        y_plus = approx g (y0 |+| (mult_factor |*| (toward_y grad_g y0 x)))
+        y_minus = approx g (y0 |-| (mult_factor |*| (toward_y grad_g y0 x)))
         grad_g = grad g
     
 
 estimate_y_ :: (RealVec (Vec n R), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R 
 estimate_y_ b episilon g y0 x
-    | b >= 25 = y0
+    | b >= precision_ = y0
     | theta_plus == (pi / 2) = y_plus
     | theta_minus == (pi/2) = y_minus
     | theta_minus == theta_plus = y0
