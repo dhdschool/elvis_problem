@@ -35,20 +35,20 @@ import Data.Singletons
 precision_ :: R
 precision_ = 25
 
-recentered_approx :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
+recentered_approx :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 recentered_approx g x = up (approx g_prime x_prime) where
     x_prime = down x
     (up, down, g_prime) = recenter g
 
 -- Exponetially searches until past edge of the set
-approx_find_ :: (RealVec (Vec n)) => (Vec n R -> R) -> Vec n R -> Vec n R
+approx_find_ :: (RealVec (Vec n R)) => (Vec n R -> R) -> Vec n R -> Vec n R
 approx_find_ f v 
     | f v > 0 = approx_ 0 f v 1
     | f v == 0 = v
     | otherwise = approx_find_ f (2 |*| v)
 
 -- Binary search to find edge of set once past
-approx_ :: (RealVec (Vec n) R) => Integer -> (Vec n a -> R) -> Vec n R -> R -> Vec n R
+approx_ :: (RealVec (Vec n R)) => R -> (Vec n R -> R) -> Vec n R -> R -> Vec n R
 approx_ b f v p
     | b >= precision_ = v
     | f (v) > 0 = approx_  (b+1) f (v |-| ((p/2) |*| v)) (p/2)
@@ -56,17 +56,17 @@ approx_ b f v p
     | otherwise = v
         
 -- Public wrapper
-approx :: (RealVec (Vec n)) => (Vec n R -> R) -> Vec n R -> Vec n R
+approx :: (RealVec (Vec n R)) => (Vec n R -> R) -> Vec n R -> Vec n R
 approx f v = (approx_find_ f v)
 
-positive_diag :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> (Vec n R)
+positive_diag :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> (Vec n R)
 positive_diag f = foldr (|+|) zeroVecs (generate (\i -> approx f (index i baseVecs)))
 
-negative_diag :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> (Vec n R)
+negative_diag :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> (Vec n R)
 negative_diag f = foldr (|+|) zeroVecs (generate (\i -> approx f (index i negativeVecs)))
 
 -- Diagonal center bisector for given set
-directional_identification :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> Vec n R
+directional_identification :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R
 directional_identification f = v where
     x = positive_diag f
     y = negative_diag f
@@ -82,7 +82,7 @@ test_v = 1:#1:#Nil
 
 --proj :: (RealVec (Vec n) a, SingI n) => (Vec n a -> a) -> Vec n a -> Vec n a
 
-recenter :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> ((Vec n R -> Vec n R), (Vec n R -> Vec n R), (Vec n R -> R))
+recenter :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> ((Vec n R -> Vec n R), (Vec n R -> Vec n R), (Vec n R -> R))
 recenter f = (to_center, from_center, g) where
     c = directional_identification f
     to_center v =  (v |+| c)
@@ -93,23 +93,23 @@ recenter f = (to_center, from_center, g) where
 -- r is a boundary vector as above, x is the vector which we wish to find the projection of
 -- delta f is the distance function from x_bar to r_bar, and f is the distance functionName
 
-delf :: (RealVec (Vec n), SingI n) => (Vec n R) -> (Vec n R) -> (Vec n R -> R)
+delf :: (RealVec (Vec n R), SingI n) => (Vec n R) -> (Vec n R) -> (Vec n R -> R)
 delf r_vec x = ball_adjust (norm r_vec) where
     ball_adjust a b = ballf a (b|+|x)
 
-toward_y :: (RealVec (Vec n), SingI n) => (Vec n R -> Vec n R) -> Vec n R -> Vec n R -> Vec n R
+toward_y :: (RealVec (Vec n R), SingI n) => (Vec n R -> Vec n R) -> Vec n R -> Vec n R -> Vec n R
 toward_y grad_g r x = ((grad (delf r x)) r) |+| (grad_g r)
 
 -- there exists some episilon s.t. -episilon * (toward_y g r x) + r = y 
 
 -- private wrapper
 -- x is assumed to be recentered
-estimate_y :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
+estimate_y :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 estimate_y g x = estimate_y_find_ 0 (getAngle r (grad_g r)) g r x where
     r = approx g x
     grad_g = grad g
 
-estimate_y_find_ :: (RealVec (Vec n), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R
+estimate_y_find_ :: (RealVec (Vec n R), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R
 estimate_y_find_ episilon theta g y0 x
     | theta_new - theta > 0 = estimate_y_find_ (episilon + 1) (theta_new) g y x
     | theta_new - theta <= 0 = estimate_y_ 0 (2 ** (episilon-1)) g y x
@@ -120,7 +120,7 @@ estimate_y_find_ episilon theta g y0 x
         grad_g = grad g
     
 
-estimate_y_ :: (RealVec (Vec n), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R 
+estimate_y_ :: (RealVec (Vec n R), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R 
 estimate_y_ b episilon g y0 x
     | b >= 25 = y0
     | theta_plus == (pi / 2) = y_plus
@@ -136,7 +136,7 @@ estimate_y_ b episilon g y0 x
         y_minus = approx g (y0 |-| (episilon |*| (toward_y grad_g y0 x)))
 
 -- x, g are assumed to be uncentered - this is the public wrapper
-single_proj :: (RealVec (Vec n), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
+single_proj :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 single_proj g x = y where
     y = up $ estimate_y (g_centered) (down x)
     (up, down, g_centered) = recenter g

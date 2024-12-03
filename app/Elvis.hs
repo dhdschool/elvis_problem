@@ -63,7 +63,7 @@ negativeVecs_ = \case
 negativeVecs :: (SingI n) => Vec n (Vec n R)
 negativeVecs = negativeVecs_ sing
 
-class (Foldable v, Applicative v) => RealVec v where  
+class RealVec v where  
     norm :: v -> R 
     (<.>) :: v -> v -> R
     (|+|) :: v -> v -> v
@@ -100,7 +100,7 @@ scmult_ = \case
     SZ -> \_ -> \_ -> Nil
     SS l -> \r -> \(x:#xs) -> (r*x) :# scmult_ l r xs
 
-instance (SingI (n::Nat), Applicative (Vec n)) => RealVec (Vec n) where
+instance (SingI (n::Nat), Applicative (Vec n)) => RealVec (Vec n R) where
     norm v = norm_ sing v
     (<.>) x y = dot_ sing x y
     (|+|) x y = add_ sing x y
@@ -114,7 +114,7 @@ instance (SingI (n::Nat), Applicative (Vec n)) => RealVec (Vec n) where
     grad f x = generate (\i -> dirDerivative f x (index i baseVecs))
 
 type ConFun n = [(Vec n R -> R)]
-type VSet m n = Vec m (ConFun n R)
+type VSet m n = Vec m (ConFun n)
 
 
 class CSet m n where
@@ -128,7 +128,7 @@ contains_add :: [R] -> R
 contains_add [] = 0
 contains_add (x:xs) = min x (contains_add xs)
 
-contains_inter :: (Sing n, Sing m) -> Vec n R -> VSet m n R -> Bool
+contains_inter :: (Sing n, Sing m) -> Vec n R -> VSet m n -> Bool
 contains_inter = \case
     (SZ, _)  -> \_ -> \_ -> True
     (_, SZ) -> \_ -> \_ -> False  
@@ -154,8 +154,8 @@ ballf :: R -> Vec n R -> R
 ballf r Nil = r**2
 ballf r (x:#xs) = x**2 + ballf r xs
 
-ball :: (SingI n, RealVec (Vec n)) => R -> VSet (Lit 1) n
+ball :: (SingI n, RealVec (Vec n R)) => R -> VSet (Lit 1) n
 ball r = [ballf r]:#Nil
     
-ellipsoid :: (SingI n, RealVec (Vec n)) => R -> Vec n R -> VSet (Lit 1) n
+ellipsoid :: (SingI n, RealVec (Vec n R)) => R -> Vec n R -> VSet (Lit 1) n
 ellipsoid r c = [ellipsoidf r c]:#Nil
