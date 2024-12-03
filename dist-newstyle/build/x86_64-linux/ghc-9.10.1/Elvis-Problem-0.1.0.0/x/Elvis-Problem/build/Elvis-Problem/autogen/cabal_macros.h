@@ -40,6 +40,16 @@
   (major1) == 0 && (major2) <  7 || \
   (major1) == 0 && (major2) == 7 && (minor) <= 10)
 #endif /* MIN_VERSION_ghc_typelits_natnormalise */
+/* package numbers-3000.2.0.2 */
+#ifndef VERSION_numbers
+#define VERSION_numbers "3000.2.0.2"
+#endif /* VERSION_numbers */
+#ifndef MIN_VERSION_numbers
+#define MIN_VERSION_numbers(major1,major2,minor) (\
+  (major1) <  3000 || \
+  (major1) == 3000 && (major2) <  2 || \
+  (major1) == 3000 && (major2) == 2 && (minor) <= 0)
+#endif /* MIN_VERSION_numbers */
 /* package singletons-3.0.3 */
 #ifndef VERSION_singletons
 #define VERSION_singletons "3.0.3"

@@ -32,6 +32,9 @@ import FixedVector
 import Data.Singletons
 import Data.Kind (Type)
 import Data.Foldable
+import Data.Number.CReal
+
+type R = CReal
 
 precision :: Num a => a
 precision = 8
@@ -52,12 +55,23 @@ baseVecs_ = \case
 baseVecs :: (RealFloat a, SingI n) => Vec n (Vec n a)
 baseVecs = baseVecs_ sing
 
+negativeVecs_ :: (RealFloat a) => Sing n -> Vec n (Vec n a)
+negativeVecs_ = \case
+    SZ -> Nil
+    SS l -> (-1 :# zeroVecs_ l) :# ((0 :#) <$> negativeVecs_ l)
+
+negativeVecs :: (RealFloat a, SingI n) => Vec n (Vec n a)
+negativeVecs = negativeVecs_ sing
+
 class (RealFloat a, Foldable v, Applicative v) => RealVec v a where  
     norm :: v a -> a 
     (<.>) :: v a -> v a -> a
     (|+|) :: v a -> v a -> v a
     (|-|) :: v a -> v a -> v a
     (|*|) :: a -> v a -> v a
+    unit :: v a -> v a
+    bisector :: v a -> v a -> v a
+    getAngle :: v a -> v a -> a
     dirDerivative :: (v a -> a) -> v a -> v a -> a
     grad :: (v a -> a) -> v a -> v a
 
@@ -79,7 +93,7 @@ add_ = \case
 sub_ :: (RealFloat a) => Sing n -> Vec n a -> Vec n a -> Vec n a
 sub_ = \case
     SZ -> \_ -> \_ -> Nil
-    SS l -> \(x:#xs) -> \(y:#ys) -> (x-y) :# add_ l xs ys
+    SS l -> \(x:#xs) -> \(y:#ys) -> (x-y) :# sub_ l xs ys
 
 scmult_ :: (RealFloat a) => Sing n -> a -> Vec n a -> Vec n a
 scmult_ = \case
@@ -92,6 +106,9 @@ instance (RealFloat a, SingI (n::Nat), Applicative (Vec n)) => RealVec (Vec n) a
     (|+|) x y = add_ sing x y
     (|-|) x y = sub_ sing x y
     (|*|) r x = scmult_ sing r x
+    unit x = (1/(norm x)) |*| x
+    bisector x y = ((norm y) |*| x) |+| ((norm x) |*| y)
+    getAngle x y = acos ((x<.>y) / (norm x * norm y))
     dirDerivative f x v = (f(x |+| (h|*|v)) - f(x)) / h  where
          h = 10 ** (-precision)
     grad f x = generate (\i -> dirDerivative f x (index i baseVecs))
@@ -127,7 +144,7 @@ instance (SingI m, SingI n) => CSet m n where
     --distance 
     --add f1 f2 = f1 <*> ((++) <$> f2)
 
-    
+
 ellipsoidf :: (RealFloat a) => a -> Vec n a -> Vec n a -> a
 ellipsoidf r Nil Nil = r**2
 ellipsoidf r (c:#cs) (x:#xs) = x**2 / c**2 + ellipsoidf r cs xs
