@@ -33,7 +33,7 @@ import Elvis
 import Data.Singletons
 
 precision_ :: R
-precision_ = 5
+precision_ = 25
 
 recentered_approx :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 recentered_approx g x = up (approx g_prime x_prime) where
@@ -75,7 +75,7 @@ directional_identification f = v where
 
 
 test_func :: Vec (Lit 2) R -> R
-test_func v = (index (FZ) v)**2 + (((index (FS FZ) v) + 1)**2)/4 - 1
+test_func v = (index (FZ) v)^2 + (((index (FS FZ) v) + 1)^2)/4 - 1
 
 test_v :: Vec (Lit 2) R
 test_v = 1:#1:#Nil
@@ -94,11 +94,11 @@ recenter f = (to_center, from_center, g) where
 -- delta f is the distance function from x_bar to r_bar, and f is the distance functionName
 
 delf :: (RealVec (Vec n R), SingI n) => (Vec n R) -> (Vec n R) -> (Vec n R -> R)
-delf r_vec x = ball_adjust (norm r_vec) where
-    ball_adjust a b = ballf a (b|+|x)
+delf r x = ball_adjust (norm (x|-|r)) where
+    ball_adjust a b = ballf a (b|-|x)
 
 toward_y :: (RealVec (Vec n R), SingI n) => (Vec n R -> Vec n R) -> Vec n R -> Vec n R -> Vec n R
-toward_y grad_g r x = ((grad (delf r x)) r) |+| (grad_g r)
+toward_y grad_g r x = (unit $ (grad (delf r x)) r) |+| (unit $ grad_g r)
 
 -- there exists some episilon s.t. -episilon * (toward_y g r x) + r = y 
 

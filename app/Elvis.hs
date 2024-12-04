@@ -78,7 +78,7 @@ class RealVec v where
 norm_ :: Sing n -> Vec n R -> R
 norm_ = \case
         SZ -> \_ -> 0
-        SS l -> \(x:#xs) -> x**2 + norm_ l xs
+        SS l -> \(x:#xs) -> x^2 + norm_ l xs
     
 dot_ :: Sing n -> Vec n R -> Vec n R -> R
 dot_ = \case
@@ -101,16 +101,16 @@ scmult_ = \case
     SS l -> \r -> \(x:#xs) -> (r*x) :# scmult_ l r xs
 
 instance (SingI (n::Nat), Applicative (Vec n)) => RealVec (Vec n R) where
-    norm v = norm_ sing v
+    norm v = sqrt $ norm_ sing v
     (<.>) x y = dot_ sing x y
     (|+|) x y = add_ sing x y
     (|-|) x y = sub_ sing x y
     (|*|) r x = scmult_ sing r x
     unit x = (1/(norm x)) |*| x
     bisector x y = ((norm y) |*| x) |+| ((norm x) |*| y)
-    getAngle x y = acos ((x<.>y) / (norm x * norm y))
+    getAngle x y = acos ((x<.>y) / ( (norm x) * (norm y)) )
     dirDerivative f x v = (f(x |+| (h|*|v)) - f(x)) / h  where
-         h = 10 ** (-precision)
+         h = (10::R) ** (-precision)
     grad f x = generate (\i -> dirDerivative f x (index i baseVecs))
 
 type ConFun n = [(Vec n R -> R)]
@@ -145,17 +145,16 @@ instance (SingI m, SingI n) => CSet m n where
     --add f1 f2 = f1 <*> ((++) <$> f2)
 
 
-ellipsoidf :: R -> Vec n R -> Vec n R -> R
-ellipsoidf r Nil Nil = r**2
-ellipsoidf r (c:#cs) (x:#xs) = x**2 / c**2 + ellipsoidf r cs xs
+-- ellipsoidf :: R -> Vec n R -> Vec n R -> R
+-- ellipsoidf r Nil Nil = r^2
+-- ellipsoidf r (c:#cs) (x:#xs) = x^2 / c^2 + ellipsoidf r cs xs
 
 
-ballf :: R -> Vec n R -> R
-ballf r Nil = r**2
-ballf r (x:#xs) = x**2 + ballf r xs
+ballf :: (RealVec (Vec n R)) => R -> Vec n R -> R
+ballf r x = norm x - r
 
 ball :: (SingI n, RealVec (Vec n R)) => R -> VSet (Lit 1) n
 ball r = [ballf r]:#Nil
     
-ellipsoid :: (SingI n, RealVec (Vec n R)) => R -> Vec n R -> VSet (Lit 1) n
-ellipsoid r c = [ellipsoidf r c]:#Nil
+-- ellipsoid :: (SingI n, RealVec (Vec n R)) => R -> Vec n R -> VSet (Lit 1) n
+-- ellipsoid r c = [ellipsoidf r c]:#Nil
