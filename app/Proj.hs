@@ -38,6 +38,12 @@ import Data.Singletons
 precision_ :: R
 precision_ = 25
 
+-- This method relies on approximating a center to our current function, but once that is found we can use our analytic formula
+approx_fast :: (RealVec (Vec n R), SingI n) =>  (Vec n R -> Vec n R, Vec n R -> Vec n R, Vec n R -> R) -> Vec n R -> Vec n R
+approx_fast (up, down, g_center) x = up $ (-(g_center zeroVecs)) |*| (unit $ x_center) where
+    x_center = down x
+
+-- Numerical approximations from from the center of the set as opposed to from the origin
 recentered_approx :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 recentered_approx g x = up (approx g_prime x_prime) where
     x_prime = down x
@@ -58,17 +64,19 @@ approx_ b f v p
     | f (v) < 0 = approx_  (b+1) f (v |+| ((p/2) |*| v)) (p/2)
     | otherwise = v
         
--- Public wrapper
+-- Public wrapper for numerical approximation of a vector along the boundary of f
 approx :: (RealVec (Vec n R)) => (Vec n R -> R) -> Vec n R -> Vec n R
 approx f v = (approx_find_ f v)
 
+-- Boundaries of the set in the direction of ei (the base vector for i in n)
 positive_diag :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> (Vec n R)
 positive_diag f = foldr (|+|) zeroVecs (generate (\i -> approx f (index i baseVecs)))
 
+-- Boundaries of the set in the direction of -ei
 negative_diag :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> (Vec n R)
 negative_diag f = foldr (|+|) zeroVecs (generate (\i -> approx f (index i negativeVecs)))
 
--- Diagonal center bisector for given set
+-- Finds the center of a given convex set, f is assumed to be in F (convex, lsc, and proper)
 directional_identification :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R
 directional_identification f = v where
     x = positive_diag f
@@ -83,6 +91,9 @@ test_func v = (index (FZ) v)^(2::Integer) + (((index (FS FZ) v) + 1)^(2::Integer
 test_v :: Vec (Lit 2) R
 test_v = 1:#1:#Nil
 
+-- Provides functions that change the relation to the origin
+-- To change what a origin f is with respect to, then convert back use the following format:
+-- to_center (g (from_center x))
 recenter :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> ((Vec n R -> Vec n R), (Vec n R -> Vec n R), (Vec n R -> R))
 recenter f = (to_center, from_center, g) where
     c = directional_identification f
@@ -92,12 +103,13 @@ recenter f = (to_center, from_center, g) where
 
 
 -- r is a boundary vector as above, x is the vector which we wish to find the projection of
--- delta f is the distance function from x_bar to r_bar, and f is the distance functionName
+-- delta f is the distance function from x_bar to r_bar, and f is the distance function
 
 delf :: (RealVec (Vec n R), SingI n) => (Vec n R) -> (Vec n R) -> (Vec n R -> R)
 delf r x = ball_adjust (norm (x|-|r)) where
     ball_adjust a b = ballf a (b|-|x)
 
+-- equivalent to the normalized (- delta grad f(r) + grad g (r))
 toward_y :: (RealVec (Vec n R), SingI n) => (Vec n R -> Vec n R) -> Vec n R -> Vec n R -> Vec n R
 toward_y grad_g r x = (unit $ (grad (delf r x)) r) |+| (unit $ grad_g r)
 
