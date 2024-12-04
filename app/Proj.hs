@@ -32,6 +32,9 @@ import FixedVector
 import Elvis
 import Data.Singletons
 
+--Speed could be potentially increased by reducing redudent calculations in approx and estimate_y
+-- but to be honest im just glad that this module is working.
+
 precision_ :: R
 precision_ = 25
 
@@ -75,12 +78,10 @@ directional_identification f = v where
 
 
 test_func :: Vec (Lit 2) R -> R
-test_func v = (index (FZ) v)^2 + (((index (FS FZ) v) + 1)^2)/4 - 1
+test_func v = (index (FZ) v)^(2::Integer) + (((index (FS FZ) v) + 1)^(2::Integer))/4 - 1
 
 test_v :: Vec (Lit 2) R
 test_v = 1:#1:#Nil
-
---proj :: (RealVec (Vec n) a, SingI n) => (Vec n a -> a) -> Vec n a -> Vec n a
 
 recenter :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> ((Vec n R -> Vec n R), (Vec n R -> Vec n R), (Vec n R -> R))
 recenter f = (to_center, from_center, g) where
@@ -108,6 +109,7 @@ estimate_y :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n
 estimate_y g x = estimate_y_find_ 0 g r x where
     r = approx g x
 
+--Exponential search to find episilon bounds 
 estimate_y_find_ :: (RealVec (Vec n R), SingI n) => R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R
 estimate_y_find_ episilon g y0 x
     | theta_plus == (pi/2) = y_plus
@@ -123,7 +125,7 @@ estimate_y_find_ episilon g y0 x
         y_minus = approx g (y0 |-| (mult_factor |*| (toward_y grad_g y0 x)))
         grad_g = grad g
     
-
+--Binary search to approximate episilon once bounds have been located
 estimate_y_ :: (RealVec (Vec n R), SingI n) => R -> R -> (Vec n R -> R) -> Vec n R -> Vec n R -> Vec n R 
 estimate_y_ b episilon g y0 x
     | b >= precision_ = y0
@@ -140,7 +142,12 @@ estimate_y_ b episilon g y0 x
         y_minus = approx g (y0 |-| (episilon |*| (toward_y grad_g y0 x)))
 
 -- x, g are assumed to be uncentered - this is the public wrapper
+-- Additionally, g maps to R1, hence only one constraint is imposed
 single_proj :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
 single_proj g x = y where
     y = up $ estimate_y (g_centered) (down x)
     (up, down, g_centered) = recenter g
+
+--Corresponding distance function, although oddly enough we have used proj x to find dS x, not the other way around.
+single_dist :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> R
+single_dist g x = norm $ single_proj g x

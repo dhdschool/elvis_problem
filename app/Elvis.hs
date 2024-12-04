@@ -30,8 +30,6 @@ module Elvis where
 
 import FixedVector
 import Data.Singletons
-import Data.Kind (Type)
-import Data.Foldable
 import Data.Number.BigFloat
 
 type R = BigFloat Prec10
@@ -78,7 +76,7 @@ class RealVec v where
 norm_ :: Sing n -> Vec n R -> R
 norm_ = \case
         SZ -> \_ -> 0
-        SS l -> \(x:#xs) -> x^2 + norm_ l xs
+        SS l -> \(x:#xs) -> x^(2::Integer) + norm_ l xs
     
 dot_ :: Sing n -> Vec n R -> Vec n R -> R
 dot_ = \case
@@ -135,26 +133,15 @@ contains_inter = \case
     (l1, SS l2) -> \v -> \(f:#fs) -> ((contains_add $ f <*> (pure v)) <=0) && contains_inter (l1, l2) v fs
 
 
---distance_ :: (RealFloat a) => VSet m n a -> Vec n a -> a
-
-
 instance (SingI m, SingI n) => CSet m n where
     contains v f = contains_inter (sing, sing) v f
     intersection f1 f2 = (f1 |++| f2)
     --distance 
     --add f1 f2 = f1 <*> ((++) <$> f2)
 
-
--- ellipsoidf :: R -> Vec n R -> Vec n R -> R
--- ellipsoidf r Nil Nil = r^2
--- ellipsoidf r (c:#cs) (x:#xs) = x^2 / c^2 + ellipsoidf r cs xs
-
-
 ballf :: (RealVec (Vec n R)) => R -> Vec n R -> R
 ballf r x = norm x - r
 
 ball :: (SingI n, RealVec (Vec n R)) => R -> VSet (Lit 1) n
 ball r = [ballf r]:#Nil
-    
--- ellipsoid :: (SingI n, RealVec (Vec n R)) => R -> Vec n R -> VSet (Lit 1) n
--- ellipsoid r c = [ellipsoidf r c]:#Nil
+
