@@ -1,14 +1,8 @@
-<style>
-    .force-word-wrap pre code{
-        white-space: nowrap;
-        word-wrap: break-word;
-        word-break: break-word;
-    }
+<link rel="stylesheet" type="text/css" media="all" href="/readme/style.css"/>
+<img src=./readme/readme.svg width=100 height=100 alt="Error">
 
-</style>
-!["If you're seeing this, something has gone horribly wrong"](./readme/readme.svg "Example")
 
-<div class="force-word-wrap" markdown ="1">
+<div class="force-code-wrap" markdown="1">
 
 # Getting Started
 This code base relies on a functional programming language known as Haskell. The main advantages of Haskell for this project include the strong type system that prevents an assortment of errors at runtime, as well as the strong style of pure functional programming that lends itself to a easy translation to analysis.

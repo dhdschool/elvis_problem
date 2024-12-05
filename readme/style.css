@@ -1,3 +1,11 @@
-mk{
-    color: "white";
+
+.force-word-wrap pre code{
+    white-space: nowrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    color: white;
+}
+
+.svg_default{
+    fill: white;
 }
