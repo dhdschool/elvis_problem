@@ -1,6 +1,6 @@
-<svg width="100" height="100" xmlns="http://readme/svg">
+<svg width="100" height="100" xmlns="readme/svg">
 <foreignObject width="100" height="100">
-    <div xmlns="http://readme/html">
+    <div xmlns="readme/html">
         <ul>
             <li>text</li>
         </ul>
