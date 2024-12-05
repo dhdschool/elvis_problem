@@ -32,18 +32,10 @@ import FixedVector
 import Elvis
 import Data.Singletons
 
-<<<<<<< Updated upstream
 precision_ :: Num a => a
 precision_ = 25
 
 recentered_approx :: (RealVec (Vec n) a, SingI n) => (Vec n a -> a) -> Vec n a -> Vec n a
-=======
-precision_ :: R
-precision_ = 25
-
--- Numerical approximations from from the center of the set as opposed to from the origin
-recentered_approx :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
->>>>>>> Stashed changes
 recentered_approx g x = up (approx g_prime x_prime) where
     x_prime = down x
     (up, down, g_prime) = recenter g
