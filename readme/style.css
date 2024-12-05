@@ -6,6 +6,13 @@
     color: white;
 }
 
-.svg_default{
-    fill: white;
+.header .plain{
+    font-size: xx-large;
+}
+
+.section .plain{
+    font-size: x-large;
+}
+.plain{
+    color: white;
 }

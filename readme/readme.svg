@@ -1,10 +1,32 @@
-<?xml-stylesheet type="text/css" href="style.css"?>    
-<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg" class="svg_default">
 
-<foreignObject width="100" height="100" class="svg_default">
-    <div xmlns="http://www.w3.org/1999/xhtml" markdown="1" class="svg_default">
-        Hello
-        <!-- Other embed HTML element/text into SVG -->
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg" class="svgDefault" fill="currentColor" stroke-width="1px" stroke="red">
+<style>
+    .force-word-wrap pre code{
+        white-space: nowrap;
+        word-wrap: break-word;
+        word-break: break-word;
+        color: white;
+    }
+
+    header .plain{
+        font-size: xx-large;
+    }
+
+    section .plain{
+        font-size: x-large;
+    }
+    .plain{
+        color: white;
+    }
+
+</style> 
+<foreignObject width="100" height="100">
+    <div xmlns="http://www.w3.org/1999/xhtml" class="plain">
+        <header>
+            Hello
+        </header>
+        Smaller text
+
     </div>
 </foreignObject>
 </svg>
