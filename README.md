@@ -71,7 +71,7 @@ Which will give you (in this case) the result:
 -8.6590542196e-1:#4.4934348949e-1:#2.1976851544e-1:#Nil
 ```
 
-Be warned, this code assumes your functions are convex, bounded, and lower semi-continous. If your functions do not satisfy these constraints, there may occur some unexpected behavior (infinite loops, crashes, wrong answers, etc.)
+Be warned, this code assumes your functions are convex, bounded, and lower semi-continous (and the set that they generate contains the zero vector). If your functions do not satisfy these constraints, there may occur some unexpected behavior (infinite loops, crashes, wrong answers, etc.)
 
 # Documentation
 
