@@ -1,9 +1,10 @@
-<svg width="100" height="100" xmlns="readme/svg">
+<?xml-stylesheet type="text/css" href="style.css"?>    
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
 <foreignObject width="100" height="100">
-    <div xmlns="readme/html">
-        <ul>
-            <li>text</li>
-        </ul>
+    <div xmlns="http://www.w3.org/1999/xhtml" markdown="1" class="default">
+        <mk markdown="1">
+            Hello
+        </mk>
         <!-- Other embed HTML element/text into SVG -->
     </div>
 </foreignObject>
