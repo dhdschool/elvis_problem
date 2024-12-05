@@ -32,8 +32,6 @@ import FixedVector
 import Elvis
 import Data.Singletons
 
---Speed could be potentially increased by reducing redudent calculations in approx and estimate_y
--- but to be honest im just glad that this module is working.
 
 precision_ :: R
 precision_ = 25

@@ -140,11 +140,6 @@ instance (SingI (n::Nat)) => RealVec (Vec n R) where
          h = (10::R) ** (- (fromInteger precision))
     -- Returns the gradient of f at x (assumed to exist due to convexity of problems)
     grad f x = generate (\i -> dirDerivative f x (index i baseVecs))
-    -- Returns the line integral of a vector valued function (using Riemann sums)
-    integral f x = (sum $ f <$> (area)) / (fromInteger h) where
-        h = precision ^ 2
-        area = pairs (|-|) ((|*|x) <$> bounds)
-        bounds = ((fromInteger) <$> [0..h])
 
 -- Auxillery helper function, applys binary operator adjacent elements of a list and returns a list of size n-1,
 -- of of size 0 if there are not enough elements in the list
