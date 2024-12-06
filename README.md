@@ -1,22 +1,27 @@
 # Getting Started
 This code base relies on a functional programming language known as Haskell. The main advantages of Haskell for this project include the strong type system that prevents an assortment of errors at runtime, as well as the strong style of pure functional programming that lends itself to a easy translation to analysis.
 
-Before installing, please ensure that your system has ~10GB of free space (if on Windows).
+Before installing, please ensure that your system has **~10GB of free space (if on Windows).**
+
+### (Optional) Installing Visual Studio Code
+Optionally, you may wish to install Visual Studio Code (vscode). This IDE comes with the ability to install extensions that provide syntax and error highlighting for the haskell code provided, as well as an ease of use in navigating the Linux kernel from a Windows user's perspective (see below). Visual studio code is **not** required to run this project, however. If you wish to install vscode (and are on a Windows operating system), you should do so before proceeding further into this installation and download the vscode installer **on Windows**. You can do so at this link https://code.visualstudio.com/download.
 
 ### Installation Guide
-Optionally, you may wish to install Visual Studio Code (vscode). This IDE comes with the ability to install extensions that provide syntax and error highlighting for the haskell code provided, as well as an ease of use in navigating the Linux kernal from a Windows user's perspective (see below). Visual studio code is **not** required to run this project, however. If you wish to install vscode (and are on a Windows operating system), you should do so before proceeding further into this installation and download the vscode installer **on Windows**. You can do so at this link https://code.visualstudio.com/download.
+Unfortunately for the wide swath of the population that uses Windows (myself included), one of the dependencies for one of the projects requires a tarball installation from a remote repository, which creates a massive headache in non-Linux operating systems. Haskell itself can be run on Windows (albiet somewhat poorly), but it is wise to have a Linux kernel if you are interested in using open-source software, regardless. **If you are already working on a Linux operating system, you may skip to the section marked "From Linux".**
 
-Unfortunately for the wide swath of the population that uses Windows (myself included), one of the dependencies for one of the projects requires a tarball installation from a remote repository, which creates a massive headache in non-Linux operating systems. Haskell itself can be run on Windows (albiet somewhat poorly), but it is wise to have a Linux kernal if you are interested in using open-source software, regardless. If you are already working on a Linux operating system, you may skip to the section marked "From Linux".
+If you are using a more *exotic* operating system (MacOS, Chrome OS, DOS, Rasbpian, Android, iOS, etc.), it is up to you to figure out how to install a Ubuntu distribution. Perhaps look into Docker or Multipass, where applicable. Godspeed.
 
 ### Windows Subsystem for Linux
-Long gone are the days of needing a dual boot system that may even partition a single hardrive for multiple operating systems. The modern solution for Windows users to access their own Linux kernal is to use a built in Microsoft extension called Windows Subsystem for Linux. To do so, simply open a PowerShell terminal with administrator privileges (this can be done by pressing Windows+R, typing in powershell, and pressing Ctrl-Shift-R to run as administrator). Once you have opened PowerShell, run the following command to install WSL.
+Long gone are the days of needing a dual boot system that may even partition a single hardrive for multiple operating systems. The modern solution for Windows users to access their own Linux kernel is to use a built in Microsoft extension called Windows Subsystem for Linux. To do so, simply open a PowerShell terminal with administrator privileges (this can be done by pressing Windows+R, typing in powershell, and pressing Ctrl-Shift-R to run as administrator). Once you have opened PowerShell, run the following command to install WSL.
 
 ```wsl --install -d Ubuntu```
 
-This command will install a new Ubuntu Linux kernal onto your machine. Select an administrative password that you will not forget (it becomes very difficult to reset this password should you forget it). Once the installation is complete, you may access the Linux kernal from PowerShell with the command ```wsl```. When you first open WSL, you will be in the Linux symlink to your Windows operating system, and you should switch to the root directory of your new Linux operating system. To reach the root directory in Linux (this directory is equivalent to C: in Windows), type in the command  ```cd /``` (this stands for change directory to root).
+This command will install a new Ubuntu Linux kernel onto your machine. Select an administrative password **that you will not forget** (it becomes very difficult to reset this password should you forget it). Once the installation is complete, you may access the Linux kernel from PowerShell with the command ```wsl```. When you first open WSL, you will be in the Linux symlink to your Windows operating system, and you should switch to the root directory of your new Linux operating system. To reach the root directory in Linux (this directory is equivalent to C: in Windows), type in the command  ```cd /``` (this stands for change directory to root).
+
+**Whenever you are done using WSL** (at the end of installation), open PowerShell and enter the command ```wsl --shutdown``` to ensure that WSL doesn't use any memory in the background.
 
 ### From Linux
-Now that you have access to a Linux kernal, there are some required packages that you must install. The first of these packages is ```ghcup```, an full package installer for Haskell that includes: GHC (the compiler for Haskell); cabal (the package manager for Haskell); HLS (Syntax and error highlighting in real time). To install ghcup on Linux, one must install its dependencies first. These can be obtained with the following set of commands
+Now that you have access to a Linux kernel, there are some required packages that you must install. The first of these packages is ```ghcup```, an full package installer for Haskell that includes: GHC (the compiler for Haskell); cabal (the package manager for Haskell); HLS (Syntax and error highlighting in real time). To install ghcup on Linux, one must install its dependencies first. These can be obtained with the following set of commands
 
 ```
 sudo apt-get update
@@ -27,13 +32,13 @@ curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 
 If this returns no errors, then ghcup has been successfully installed. To use ghcup to install haskell, run the command ```ghcup tui```. This will open a ghcup text user interface (TUI). Install GHC 9.10.1 (the latest version) by navigating to it using the arrow keys, the pressing enter. Press enter on the 'Install' button, then navigate down to the 'set' button and press enter. Next, press advance install. In a similar fashion, install cabal 3.12.1.0, and HLS 2.9.0.1. Once this is done, press the q key to exit the TUI.
 
-Once this process has completed, your Linux kernal should now be able to compile and run Haskell code, as well as import packages using the cabal package manager.
+Once this process has completed, your Linux kernel should now be able to compile and run Haskell code, as well as import packages using the cabal package manager.
 
 ### (Optional) vscode integration
-If you have opted to use vscode, there are three extensions you should install for nominal performance. The first of these is the WSL extension by microsoft, which will allow you to open a remote window into your Linux kernal and modify/execute the code directly from Windows. Once this is done, open a new remote window by pressing the blue button on the bottom left of your screen, then selecting "Connect to WSL". Once you have done this, install the Haskell and Haskell Syntax Highlighting extensions into your WSL remote window.
+If you have opted to use vscode, there are three extensions you should install for nominal performance. The first of these is the WSL extension by microsoft, which will allow you to open a remote window into your Linux kernel and modify/execute the code directly from Windows. Once this is done, open a new remote window by pressing the blue button on the bottom left of your screen, then selecting "Connect to WSL". Once you have done this, install the Haskell and Haskell Syntax Highlighting extensions into your WSL remote window.
 
 ### Getting the repository
-The next step is acquiring this code. If your Linux kernal does not already have git (it won't if you have freshly installed WSL), install git by running ```sudo apt-get install git```. I advise you to clone the repository to a new directory in your Linux kernal for performance, but it is possible to clone it to your Windows operating system (contained in the folder /mnt/ on the Linux kernal). To do this, navigate to your user directory (from the Linux terminal). This can be done via the command ```cd /home/{your_username_here}```. To create a new directory to clone the repository to, use the commands 
+The next step is acquiring this code. If your Linux kernel does not already have git (it won't if you have freshly installed WSL), install git by running ```sudo apt-get install git```. I advise you to **clone the repository to a new directory in your Linux kernel for performance**, but it is possible to clone it to your Windows operating system (contained in the folder /mnt/ on the Linux kernel). To do this, navigate to your user directory (from the Linux terminal). This can be done via the command ```cd /home/{your_username_here}```. To create a new directory to clone the repository to, use the commands 
 ```
 mkdir elvis_problem
 cd elvis_problem
@@ -42,10 +47,10 @@ git clone "https://github.com/dhdschool/elvis_problem"
 which will make a new folder in your user directory and clone this GitHub repository into that folder.
 
 ### Installing the project dependencies
-To install the libraries that this project depends on, run the command ```cabal build``` once in the directory of the repository (ideally /home/{username}/elvis_problem or some variant). After this is run, your installation is complete
+To install the libraries that this project depends on, run the command ```cabal build``` once in the directory of the repository (**ideally** /home/{username}/elvis_problem or some variant). After this is run, your installation is complete
 
 # Usage
-I have not yet decided end-user usage for this project will look like. Currently, my method for using these methods is to run ```cabal repl```, which opens a "read-eval-print-loop" for Haskell. Once inside, any functions contained in the app folder files can be run. To exit the REPL, type ":q". An example of what this may be used for can look as follows
+I have not yet decided what end-user usage for this project will look like. Currently, my method for using these methods is to run ```cabal repl```, which opens a "read-eval-print-loop" for Haskell. Once inside, any functions contained in the app folder files can be run. To exit the REPL, type ":q". An example of what this may be used for can look as follows
 
 ```
 ghci> test_v
@@ -71,7 +76,7 @@ Which will give you (in this case) the result:
 -8.6590542196e-1:#4.4934348949e-1:#2.1976851544e-1:#Nil
 ```
 
-Be warned, this code assumes your functions are convex, bounded, and lower semi-continous (and the set that they generate contains the zero vector). If your functions do not satisfy these constraints, there may occur some unexpected behavior (infinite loops, crashes, wrong answers, etc.)
+**Be warned:** this code assumes your functions are convex, bounded, and lower semi-continous (and the set that they generate contains the zero vector). If your functions do not satisfy these constraints, there may occur some unexpected behavior (infinite loops, crashes, wrong answers, etc.).
 
 # Documentation
 
@@ -100,7 +105,7 @@ This class is then instantiated for all vectors of object type R and of dimensio
 
 ### Convex Sets
 
-Similarly, there are some operations we would like to have defined on Convex sets. Note that this program does not check whether or not a function produces a convex set at compile time (such a program would require extreme use of meta-programming and dependent types at a level that I am not proficient with, and most likely would tank performance), therefore it is up to the user to ensure that all inputs are proper. The operations that are defined however, are set intersection, projection of a real vector onto a set, the corresponding distance of the projection, the minkowski sum, and whether or not a vector is contained within the set. The data type that is instantiated is VSet (short for vector set), which is simply a syntatic equivalent for a vector of dimension m that contains some minkowski sum of a list of vector valued functions that map from R^n -> R. This instantiation is valid for all natural numbers n and m.
+Similarly, there are some operations we would like to have defined on Convex sets. Note that **this program does not check whether or not a function produces a convex set at compile time** (such a program would require extreme use of meta-programming and dependent types at a level that I am not proficient with, and most likely would tank performance), therefore it is up to the user to ensure that all inputs are proper. The operations that are defined however, are set intersection, projection of a real vector onto a set, the corresponding distance of the projection, the minkowski sum, and whether or not a vector is contained within the set. The data type that is instantiated is VSet (short for vector set), which is simply a syntatic equivalent for a vector of dimension m that contains some minkowski sum of a list of vector valued functions that map from R^n -> R. This instantiation is valid for all natural numbers n and m.
 
 ### The Proj file
 Proj.hs is an internal file that uses numerical methods to approximate the projection. When this project is finished, the users ability to access Proj.hs will be removed (as it is an internal tool), so if one wishes to access those function from ghci at that time, run the command ```:l app/Proj.hs``` to load those functions into the ghci namespace.
