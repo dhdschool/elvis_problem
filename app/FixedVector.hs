@@ -98,13 +98,6 @@ type family (n::Nat) + (m::Nat) :: Nat where
 type family (n::Nat) - (m::Nat) :: Nat where
     'S n - m = 'S(n-m)
 
-type family (n::Nat) * (m::Nat) :: Nat where
-    n * m = Lit ( (IntNat n) GHC.TypeLits.* (IntNat m))
-    
-type family IntNat (n::Nat) :: GHC.TypeLits.Nat where
-    IntNat Z = 0
-    IntNat (S n) = 1 GHC.TypeLits.+ (IntNat n)
-
 
 (|++|) :: Vec n a -> Vec m a -> Vec (n+m) a
 (|++|) = \case
