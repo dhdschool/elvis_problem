@@ -110,5 +110,5 @@ pairs _ _ = []
 
 -- The function that defines a ball in R n of radius r
 ballf :: (RealVec (Vec n R)) => R -> Vec n R -> R
-ballf r x = norm x - r
+ballf r x = (norm x)**2 - (r)**2
 

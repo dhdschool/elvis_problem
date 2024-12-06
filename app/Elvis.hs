@@ -54,14 +54,14 @@ contains_add gs v = norm v <= sum (liftA2 single_dist gs (pure v))
 --function for resolving intersections given the size of the vector and the number of constraints
 contains_inter :: (SingI n) => (Sing m) -> Vec n R -> VSet m n -> Bool
 contains_inter = \case
-    (SZ) -> \_ -> \_ -> False  
+    (SZ) -> \_ -> \_ -> True  
     (SS l2) -> \v -> \(f:#fs) -> ((contains_add f v)) && contains_inter (l2) v fs
 
-maxVec :: (SingI n) => (Vec n R -> R) -> Vec m (Vec n R) -> Vec n R
-maxVec _ Nil = zeroVecs
-maxVec compare_f (v:#vs)
-    | norm v >= maximum (norm <$> vs) = v
-    | otherwise = maxVec compare_f vs
+maxVec :: (SingI n) => (Vec n R -> R) -> Vec n R -> Vec m (Vec n R) -> Vec n R
+maxVec _ _ Nil = zeroVecs
+maxVec compare_f x (v:#vs)
+    | norm (x |-| v) >= norm (maxVec compare_f x (vs)) = v
+    | otherwise = maxVec compare_f x vs
 
 
 instance (SingI m, SingI n, RealVec (Vec n R), Applicative (Vec m)) => CSet m n where
@@ -75,11 +75,13 @@ instance (SingI m, SingI n, RealVec (Vec n R), Applicative (Vec m)) => CSet m n 
   
     (<+>) g f = pure (++f) <*> g
     -- Projection of a vector onto the set
-    proj g v = y where
-        y = maxVec (norm) gs
-        gs :: Vec m (Vec n R)
-        gs = (minkowskiProjections <$> g)
-        minkowskiProjections f = foldr (|+|) zeroVecs ((single_proj <$> f) <*> pure v)
+    proj g v
+        | (contains v g) = v
+        | otherwise = y where
+            y = maxVec (norm) v gs
+            gs :: Vec m (Vec n R)
+            gs = (minkowskiProjections <$> g)
+            minkowskiProjections f = foldr (|+|) zeroVecs ((single_proj <$> f) <*> pure v)
     
     -- Distance of a vector from the closest point on the set
     distance g v = norm (proj g v)
@@ -88,3 +90,14 @@ instance (SingI m, SingI n, RealVec (Vec n R), Applicative (Vec m)) => CSet m n 
 ball :: (SingI n, RealVec (Vec n R)) => R -> VSet (Lit 1) n
 ball r = [ballf r]:#Nil
 
+unit_circle :: (VSet (Lit 1) (Lit 2))
+unit_circle = ball 1
+
+ellipsoid :: (VSet (Lit 1) (Lit 2))
+ellipsoid = ellipsoids:#Nil
+
+ellipsoidf :: Vec (Lit 2) R -> R
+ellipsoidf v = ((index FZ v)^2 + (((index (FS FZ) v) + 1)^2)/4 - 1)
+
+ellipsoids :: MinkowskiSum (Lit 2)
+ellipsoids = [ellipsoidf]
