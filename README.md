@@ -1,9 +1,11 @@
 # Getting Started
-This code base relies on a functional programming language known as Haskell. The main advantages of Haskell for this project include the strong type system that prevents an assortment of errors at runtime, as well as the strong style of pure functional programming that lends itself to a easy translation to analysis.
+This code base relies on a functional programming language known as Haskell. The main advantages of Haskell for this project include the strong type system that prevents an assortment of errors at runtime, as well as the strong style of pure functional programming that lends itself to an easy translation to analysis.
 
 Before installing, please ensure that your system has **~10GB of free space (if on Windows).**
 
-### (Optional) Installing Visual Studio Code
+Note also that this guide has only been ensured for the Windows 10 and Windows 11 operating systems.
+
+### (Optional) Installing Visual Studio Code (on Windows)
 Optionally, you may wish to install Visual Studio Code (vscode). This IDE comes with the ability to install extensions that provide syntax and error highlighting for the haskell code provided, as well as an ease of use in navigating the Linux kernel from a Windows user's perspective (see below). Visual studio code is **not** required to run this project, however. If you wish to install vscode (and are on a Windows operating system), you should do so before proceeding further into this installation and download the vscode installer **on Windows**. You can do so at this link https://code.visualstudio.com/download.
 
 ### Installation Guide
