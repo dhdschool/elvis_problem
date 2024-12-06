@@ -51,22 +51,24 @@ type family Lit (n :: GHC.TypeLits.Nat) :: Nat where
 
 type Dim n = Fin (Lit n)
 
+-- Takes in a size and an integer and returns a finite literal, will default to returning 0 if an invalid integer is given
 dim_ :: Sing n -> Integer -> Fin (S n)
-
 dim_ SZ 0 = FZ
 dim_ (SS l) n = FS (dim_ (l) (n-1))
 dim_ _ _ = FZ
 
+-- Implicit sized finite literal from number
 dim :: (SingI n) => Integer -> Fin (S n)
 dim n = dim_ sing n
 
+-- Finite types, any valid natural between 0 and a nat n is a Finite of n
 data Fin :: Nat -> Type where
     FZ :: Fin ('S n)
     FS :: Fin n -> Fin ('S n)
 deriving instance Show (Fin n)
 
 
-
+-- Vector GADT definition, Nil is the end of the vector and :# is the construction operator
 data Vec :: Nat -> Type -> Type where
     Nil :: Vec 'Z a
     (:#) :: a -> Vec n a -> Vec ('S n) a
@@ -76,6 +78,9 @@ instance (Show a) => Show (Vec n a) where
     show (x:#xs) = (show x) ++ (":#") ++ (show xs)
 
 infixr 5 :#
+
+--Below are Haskell typeclasses that provide extremely useful operations such as fmap and lift
+--These operations are used extensively in the other files
 
 instance Functor (Vec n) where
     fmap _ Nil = Nil
@@ -97,6 +102,7 @@ instance (Eq a) =>  Eq (Vec n a) where
     (==) Nil Nil = True
     (==) (x:#xs) (y:#ys) = (x==y) && (xs == ys)
 
+-- Takes two vectors and returns one vector where each element is a pair
 zipVec :: Vec n a -> Vec n b -> Vec n (a, b)
 zipVec = \case
     Nil -> \case
@@ -104,6 +110,7 @@ zipVec = \case
     x:#xs -> \case
         y:#ys -> (x, y) :# zipVec xs ys
 
+-- Defining addition and subtraction on the type level for successor nats
 type family (n::Nat) + (m::Nat) :: Nat where
     'Z + m = m
     'S n + m = 'S (n+m)
@@ -111,12 +118,13 @@ type family (n::Nat) + (m::Nat) :: Nat where
 type family (n::Nat) - (m::Nat) :: Nat where
     'S n - m = 'S(n-m)
 
-
+-- Vector append operation
 (|++|) :: Vec n a -> Vec m a -> Vec (n+m) a
 (|++|) = \case
     Nil -> \ys -> ys
     x:#xs -> \ys -> x :# (xs |++| ys)
 
+-- Vector indexing using a valid finite
 index :: Fin n -> Vec n a -> a
 index = \case
     FZ -> \case
@@ -124,23 +132,28 @@ index = \case
     FS i -> \case
         _ :# xs -> index i xs
 
+-- Generating a vector of size n where every value is a given scalar
 vecreplicate_ :: Sing n -> a -> Vec n a
 vecreplicate_ = \case
     SZ -> \_ -> Nil
     SS l -> \x -> x :# vecreplicate_ l x
 
+-- Implictily sized vector where every value is a given scalar
 vecreplicate :: SingI n => a -> Vec n a
 vecreplicate = vecreplicate_ sing
 
+-- Generating a vector of size n from a function of finites
+-- This can be used to convert a list of size n to a vector, for example
 generate_ :: Sing n -> (Fin n -> a) -> Vec n a
 generate_ = \case
     SZ   -> \_ -> Nil
     SS l -> \f -> f FZ :# generate_ l (f . FS)
 
+-- Implicitly sized vector from a function of implicitly dimensioned finites
 generate :: SingI n => (Fin n -> a) -> Vec n a
 generate = generate_ sing
 
-
+-- A type alias for the real numbers, this defines them as float with 10 decimal places of precision
 type R = BigFloat Prec10
 
 precision :: Integer
