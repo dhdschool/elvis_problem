@@ -80,7 +80,9 @@ instance (Applicative (Vec n)) => Applicative (Vec ('S n)) where
     (<*>) (fv:#fvs) (v:#vs) = fv v :# (fvs <*> vs) 
 
 deriving instance Foldable (Vec n)
-
+instance (Eq a) =>  Eq (Vec n a) where
+    (==) Nil Nil = True
+    (==) (x:#xs) (y:#ys) = (x==y) && (xs == ys)
 
 zipVec :: Vec n a -> Vec n b -> Vec n (a, b)
 zipVec = \case

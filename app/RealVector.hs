@@ -26,9 +26,11 @@
 {-# Language MultiParamTypeClasses#-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 
-import FixedVector
 
 module RealVector where
+
+import FixedVector
+import Data.Singletons
 
 -- Associated type signatures and operations with real vectors
 class RealVec v where  
@@ -42,7 +44,6 @@ class RealVec v where
     getAngle :: v -> v -> R
     dirDerivative :: (v -> R) -> v -> v -> R
     grad :: (v -> R) -> v -> v
-    integral :: (v -> R) -> v -> R
 
 -- Norm of vector of size n
 norm_ :: Sing n -> Vec n R -> R
@@ -106,3 +107,8 @@ instance (SingI (n::Nat)) => RealVec (Vec n R) where
 pairs :: (a -> a -> a) -> [a] -> [a]
 pairs f (x:(x2:xs)) = [f x2 x] ++ pairs f (x2:xs)
 pairs _ _ = []
+
+-- The function that defines a ball in R n of radius r
+ballf :: (RealVec (Vec n R)) => R -> Vec n R -> R
+ballf r x = norm x - r
+

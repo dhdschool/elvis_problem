@@ -34,43 +34,55 @@ import Proj
 
 import Data.Singletons ( Sing, SingI(..) )
 
--- ConFun stands for Constructor Function, this is a list of minkowski additions that comprise a single set
-type ConFun n = [(Vec n R -> R)]
-
---VSet stands for Vector Set, has m constraints that are each comprised of some Constructor Function
-type VSet m n = Vec m (ConFun n)
+--VSet stands for Vector Set, has m constraints
+--type VSet m n = Vec m (Vec n R -> R)
+type MinkowskiSum n = [Vec n R -> R]
+type VSet m n = Vec m (MinkowskiSum n)
 
 --CSet stands for Convex sets, this typeclass defines operations on convex sets
-class CSet m n where
+class (RealVec (Vec n R), Applicative (Vec m)) => CSet m n where
     contains :: Vec n R -> VSet m n -> Bool
-    intersection :: (CSet k n) => VSet k n -> VSet m n -> VSet (k+m) n
-    add :: (CSet k n) => VSet m n -> VSet k n -> VSet (m*k) n
+    (<:>) :: (CSet m n, CSet k n) => VSet m n -> VSet k n -> VSet (m+k) n
+    (<+>) :: (CSet m n) => VSet m n -> MinkowskiSum n -> VSet m n
     proj :: VSet m n  -> Vec n R -> Vec n R
-    distance :: Vec n R -> VSet m n -> R
+    distance :: VSet m n -> Vec n R -> R
 
 --implicit function for resolving minkowski sums
-contains_add :: [Vec n R -> R] -> Vec n R -> Bool
+contains_add :: (RealVec (Vec n R), SingI n) => MinkowskiSum n -> Vec n R -> Bool
 contains_add gs v = norm v <= sum (liftA2 single_dist gs (pure v))
 
 --function for resolving intersections given the size of the vector and the number of constraints
-contains_inter :: (Sing n, Sing m) -> Vec n R -> VSet m n -> Bool
+contains_inter :: (SingI n) => (Sing m) -> Vec n R -> VSet m n -> Bool
 contains_inter = \case
-    (SZ, _)  -> \_ -> \_ -> True
-    (_, SZ) -> \_ -> \_ -> False  
-    (l1, SS l2) -> \v -> \(f:#fs) -> ((contains_add f v)) && contains_inter (l1, l2) v fs
+    (SZ) -> \_ -> \_ -> False  
+    (SS l2) -> \v -> \(f:#fs) -> ((contains_add f v)) && contains_inter (l2) v fs
+
+maxVec :: (SingI n) => (Vec n R -> R) -> Vec m (Vec n R) -> Vec n R
+maxVec _ Nil = zeroVecs
+maxVec compare_f (v:#vs)
+    | norm v >= maximum (norm <$> vs) = v
+    | otherwise = maxVec compare_f vs
 
 
-instance (SingI m, SingI n) => CSet m n where
+instance (SingI m, SingI n, RealVec (Vec n R), Applicative (Vec m)) => CSet m n where
     -- Implicit function to determine if a vector is contained in a set
-    contains v f = contains_inter (sing, sing) v f
+    contains v f = contains_inter (sing) v f
     -- Function that returns a new set from the intersection of two sets
-    intersection f1 f2 = (f1 |++| f2)
-    --distance 
-    --add f1 f2 = f1 <*> ((++) <$> f2)
-
--- The function that defines a ball in R n of radius r
-ballf :: (RealVec (Vec n R)) => R -> Vec n R -> R
-ballf r x = norm x - r
+    (<:>) g f = g |++| f
+    -- Function that returns a new set from the minkowski sum of a set and some minkowski sum (which may be with zero) 
+    -- this currently does not support the minkowski sum between two intersections comprised of minkowski sums
+    -- only the minkowski sum of a single minkowski sum and some intersection of minkowski sums
+  
+    (<+>) g f = pure (++f) <*> g
+    -- Projection of a vector onto the set
+    proj g v = y where
+        y = maxVec (norm) gs
+        gs :: Vec m (Vec n R)
+        gs = (minkowskiProjections <$> g)
+        minkowskiProjections f = foldr (|+|) zeroVecs ((single_proj <$> f) <*> pure v)
+    
+    -- Distance of a vector from the closest point on the set
+    distance g v = norm (proj g v)
 
 -- The set formed by the ball function
 ball :: (SingI n, RealVec (Vec n R)) => R -> VSet (Lit 1) n
