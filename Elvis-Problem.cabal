@@ -66,6 +66,7 @@ executable Elvis-Problem
         FixedVector
         RealVector
         Proj
+        ConvexSet
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
