@@ -127,7 +127,7 @@ estimate_y_find_ episilon g y0 x
     | theta_minus == (pi/2) = y_minus
     | theta_minus == theta_plus = y0
     | theta_plus > theta_minus = estimate_y_find_ (episilon + 1) g y_plus x
-    | theta_minus > theta_plus = estimate_y_ 0 (2 ** (episilon-1)) g y0 x
+    | theta_minus > theta_plus = estimate_y_ 0 (2 ** (episilon)) g y0 x
     | otherwise = y0 where
         mult_factor = 2 ** episilon
         theta_plus = getAngle (grad_g y_plus) y_plus
