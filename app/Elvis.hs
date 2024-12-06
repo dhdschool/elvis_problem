@@ -32,3 +32,8 @@ import FixedVector
 import RealVector
 import ConvexSet
 
+data HalfSpace :: Nat -> Type where
+    Zeta :: (RealVec (Vec n R)) => Vec n R -> R -> HalfSpace n
+
+in_space :: (RealVec (Vec R n)) => Halfspace n -> Vec n R -> Bool
+in_space (Zeta n r) v = (n <.> v) <= r
