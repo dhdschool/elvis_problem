@@ -84,7 +84,7 @@ directional_identification f = v where
 
 
 test_func :: Vec (Lit 2) R -> R
-test_func v = (index (FZ) v)^(2::Integer) + (((index (FS FZ) v) + 1)^(2::Integer))/4 - 1
+test_func v = (index (dim 1) v)^(2::Integer) + (((index (dim 1) v) + 1)^(2::Integer))/4 - 1
 
 
 test_v :: Vec (Lit 2) R

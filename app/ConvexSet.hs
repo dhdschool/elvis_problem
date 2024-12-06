@@ -48,16 +48,17 @@ class (RealVec (Vec n R), Applicative (Vec m)) => CSet m n where
     proj :: VSet m n  -> Vec n R -> Vec n R
     distance :: VSet m n -> Vec n R -> R
 
---implicit function for resolving minkowski sums
+--implicit function for resolving vector existance in minkowski sums
 contains_add :: (RealVec (Vec n R), SingI n) => MinkowskiSum n -> Vec n R -> Bool
 contains_add gs v = norm v <= sum (liftA2 single_dist gs (pure v))
 
---function for resolving intersections given the size of the vector and the number of constraints
+--function for resolving vector existance in set intersections given the size of the vector and the number of constraints
 contains_inter :: (SingI n) => (Sing m) -> Vec n R -> VSet m n -> Bool
 contains_inter = \case
     (SZ) -> \_ -> \_ -> True  
     (SS l2) -> \v -> \(f:#fs) -> ((contains_add f v)) && contains_inter (l2) v fs
 
+-- function to determine which vector in a list of vectors has the highest norm
 maxVec :: (SingI n) => (Vec n R -> R) -> Vec n R -> Vec m (Vec n R) -> Vec n R
 maxVec _ _ Nil = zeroVecs
 maxVec compare_f x (v:#vs)
@@ -98,7 +99,7 @@ ellipsoid :: (VSet (Lit 1) (Lit 2))
 ellipsoid = ellipsoids:#Nil
 
 ellipsoidf :: Vec (Lit 2) R -> R
-ellipsoidf v = ((index FZ v)^2 + (((index (FS FZ) v) + 1)^2)/4 - 1)
+ellipsoidf v = ((index FZ v)^(2::Integer) + (((index (FS FZ) v) + 1)^(2::Integer))/4 - 1)
 
 ellipsoids :: MinkowskiSum (Lit 2)
 ellipsoids = [ellipsoidf]

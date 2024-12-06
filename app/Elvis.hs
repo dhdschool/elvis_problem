@@ -32,8 +32,13 @@ import FixedVector
 import RealVector
 import ConvexSet
 
+import Data.Kind (Type)
+
+-- Halfspace defined by normal vector and dot product threshold r
 data HalfSpace :: Nat -> Type where
     Zeta :: (RealVec (Vec n R)) => Vec n R -> R -> HalfSpace n
 
-in_space :: (RealVec (Vec R n)) => Halfspace n -> Vec n R -> Bool
+-- Determining whether a vector is within a halfspace
+in_space :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> Bool
 in_space (Zeta n r) v = (n <.> v) <= r
+

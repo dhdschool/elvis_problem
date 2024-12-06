@@ -37,23 +37,36 @@ import           Data.Singletons.Base.TH
 import Data.Number.BigFloat
 
 
-    
+-- This is template haskell, the official haskell metaprogramming language
+-- This defines singleton types for all natural numbers at compile time
 $(singletons [d|
   data Nat = Z | S Nat
     deriving Eq
   |])
 
+-- This is a conversion between integer literals and their successor natural equivalents on the type level
 type family Lit (n :: GHC.TypeLits.Nat) :: Nat where
     Lit 0 = Z
     Lit n = S (Lit (n GHC.TypeLits.- 1)) 
 
 type Dim n = Fin (Lit n)
 
+dim_ :: Sing n -> Integer -> Fin (S n)
+
+dim_ SZ 0 = FZ
+dim_ (SS l) n = FS (dim_ (l) (n-1))
+dim_ _ _ = FZ
+
+dim :: (SingI n) => Integer -> Fin (S n)
+dim n = dim_ sing n
+
 data Fin :: Nat -> Type where
     FZ :: Fin ('S n)
     FS :: Fin n -> Fin ('S n)
 deriving instance Show (Fin n)
- 
+
+
+
 data Vec :: Nat -> Type -> Type where
     Nil :: Vec 'Z a
     (:#) :: a -> Vec n a -> Vec ('S n) a
