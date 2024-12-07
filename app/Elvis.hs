@@ -46,7 +46,10 @@ in_space (Zeta n r) v = (n <.> v) <= r
 
 -- Cost function associated with moving in a velocity set towards a point
 cost_function :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R ->  Vec n R -> R
-cost_function g y x = norm (y |-| x) / norm (proj g y)
+cost_function g x y = norm (y |-| x) / norm (proj g y)
+
+from_halfspace
+
 
 --Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
 -- exponential/binary search)
@@ -61,5 +64,8 @@ gradient_descent_ b gradient y0 episilon
     | otherwise = y0 where
         descend = y0 |-| (episilon |*| gradient(y0))
 
+y_single :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R -> Vec n R
+y_single g x = ((gradient_descent_ 0) $! (grad (cost_function g x))) y 1 where
+    y = 
 
 

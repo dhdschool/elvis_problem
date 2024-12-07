@@ -44,6 +44,7 @@ class RealVec v where
     getAngle :: v -> v -> R
     dirDerivative :: (v -> R) -> v -> v -> R
     grad :: (v -> R) -> v -> v
+    pnorm :: Integer -> v -> R
 
 -- Norm of vector of size n
 norm_ :: Sing n -> Vec n R -> R
@@ -75,6 +76,11 @@ scmult_ = \case
     SZ -> \_ -> \_ -> Nil
     SS l -> \r -> \(x:#xs) -> (r*x) :# scmult_ l r xs
 
+pnorm_ :: Sing n -> Integer -> Vec n R -> R
+pnorm_ = \case
+    SZ -> \_ -> \_ -> 0
+    SS l -> \power -> \(x:#xs) -> x^power + pnorm_ l power xs
+
 -- Declares that all Vectors of size n that have real values are real vectors
 instance (SingI (n::Nat)) => RealVec (Vec n R) where  
     -- Implicit norm
@@ -87,6 +93,8 @@ instance (SingI (n::Nat)) => RealVec (Vec n R) where
     (|-|) x y = sub_ sing x y
     -- Implicit infix operator for scalar multiplication
     (|*|) r x = scmult_ sing r x
+    -- Implicit pnorm for natural p
+    pnorm p v = (pnorm_ sing p v)**(1 / fromIntegral p)
     -- The below operations are automatically implicit due to the implicit nature of the functions they use
 
     -- Returns the unit vector

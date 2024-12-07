@@ -33,13 +33,11 @@ import RealVector
 import Data.Singletons
 
 
+-- Estimations can be sped up by saving gradients in the numerical approximations below as opposed to redudently calculating them
+
 precision_ :: R
 precision_ = 25
 
--- This method relies on approximating a center to our current function, but once that is found we can use our analytic formula
--- approx_fast :: (RealVec (Vec n R), SingI n) =>  (Vec n R -> Vec n R, Vec n R -> Vec n R, Vec n R -> R) -> Vec n R -> Vec n R
--- approx_fast (up, down, g_center) x = up $ (-(g_center zeroVecs)) |*| (unit $ x_center) where
---     x_center = down x
 
 -- Numerical approximations from from the center of the set as opposed to from the origin
 recentered_approx :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
