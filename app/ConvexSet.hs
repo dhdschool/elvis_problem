@@ -86,7 +86,7 @@ instance (SingI m, SingI n, RealVec (Vec n R), Applicative (Vec m)) => CSet m n 
             minkowskiProjections f = foldr (|+|) zeroVecs ((single_proj <$> f) <*> pure v)
     
     -- Distance of a vector from the closest point on the set
-    distance g v = norm (proj g v)
+    distance g v = norm (v |-| (proj g v))
 
 -- The set formed by the ball function
 ball :: (SingI n, RealVec (Vec n R)) => R -> VSet (Lit 1) n
