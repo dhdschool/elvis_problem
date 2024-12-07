@@ -33,6 +33,8 @@ import RealVector
 import ConvexSet
 
 import Data.Kind (Type)
+import Data.Singletons
+import Proj (precision_)
 
 -- Halfspace defined by normal vector and dot product threshold r
 data HalfSpace :: Nat -> Type where
@@ -41,4 +43,23 @@ data HalfSpace :: Nat -> Type where
 -- Determining whether a vector is within a halfspace
 in_space :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> Bool
 in_space (Zeta n r) v = (n <.> v) <= r
+
+-- Cost function associated with moving in a velocity set towards a point
+cost_function :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R ->  Vec n R -> R
+cost_function g y x = norm (y |-| x) / norm (proj g y)
+
+--Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
+-- exponential/binary search)
+
+-- Upon writing this I realize that my previous approximation methods are contrived versions of gradient descent
+
+gradient_descent_ :: (RealVec (Vec n R)) => R -> (Vec n R -> Vec n R) -> Vec n R -> R -> Vec n R
+gradient_descent_ b gradient y0 episilon
+    | b >= precision_ = y0
+    | norm (gradient descend) > norm (gradient y0) = gradient_descent_ (b+1) gradient y0 (episilon/2)
+    | norm (gradient y0) >= norm (gradient descend) = gradient_descent_ (b+1) gradient descend (episilon*2) 
+    | otherwise = y0 where
+        descend = y0 |-| (episilon |*| gradient(y0))
+
+
 
