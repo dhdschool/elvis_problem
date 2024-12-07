@@ -24,8 +24,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveFoldable #-}
 
--- You don't even want to know how many hours it took to get a suitable version of this
--- Certainly one of my longest math side quests
+-- An arrow with both direction and magnitude
 
 module FixedVector where
 
