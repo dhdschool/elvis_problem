@@ -73,12 +73,15 @@ gradient_descent_ b gradient y0 episilon
 
 -- Solves the elvis problem with a single interface and two constraint sets, where x0 is on the side of the interface
 -- associated with g0, and x1 is on the side associated with g1
-
 elvis_single :: (RealVec (Vec n R), CSet m n, CSet k n) => VSet m n ->  Vec n R -> VSet k n -> Vec n R -> HalfSpace n -> Vec n R
-elvis_single g0 x0 g1 x1 (Zeta n r) = ((gradient_descent_ 0) $! (grad cost)) y 1 where
-    y = lambda |*| (x1|-|x0)
-    lambda = r / (n<.>x1 - n<.>x0)
+elvis_single g0 x0 g1 x1 h= ((gradient_descent_ 0) $! (grad cost)) y 1 where
+    y = interface_intersect x0 x1 h
     cost v = (cost_function g0 x0 v) + (cost_function g1 x1 v)
+
+-- Gives the vector on an interface assuming that the interface is between the vectors x0 and x1
+interface_intersect :: (RealVec (Vec n R)) => Vec n R -> Vec n R -> HalfSpace n -> Vec n R
+interface_intersect x0 x1 (Zeta n r) = lambda |*| (x1|-|x0) where
+    lambda = r / (n<.>x1 - n<.>x0)
 
 -- Returns whether or not a given vector is contained within a region formed by the intersection of halfspaces
 in_region :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Bool
