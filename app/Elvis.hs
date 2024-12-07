@@ -43,6 +43,7 @@ import Data.List (permutations)
 data HalfSpace :: Nat -> Type where
     Zeta :: (RealVec (Vec n R)) => Vec n R -> R -> HalfSpace n
 
+-- Region formed by the intersection of a list of halfspaces
 type Region n = [HalfSpace n]
 
 -- Determining whether a vector is within a halfspace
@@ -79,16 +80,28 @@ elvis_single g0 x0 g1 x1 (Zeta n r) = ((gradient_descent_ 0) $! (grad cost)) y 1
     lambda = r / (n<.>x1 - n<.>x0)
     cost v = (cost_function g0 x0 v) + (cost_function g1 x1 v)
 
+-- Returns whether or not a given vector is contained within a region formed by the intersection of halfspaces
+in_region :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Bool
+in_region region v = foldr (&&) True ((in_space <$> region) <*> pure v)
 
+-- Gives a list containing the given halfspace and the dual halfspace
 whole_space :: (SingI n) => HalfSpace n -> [HalfSpace n]
 whole_space h = [h, get_dual h]
 
+-- Returns the counterpart of a given halfspace
 get_dual :: (SingI n) => HalfSpace n -> HalfSpace n
 get_dual (Zeta n r) = Zeta (zeroVecs |-| n) r
 
+-- Returns the regions in space created by the intersection of a list of halfspaces
 get_regions :: [HalfSpace n] -> [Region n]
 get_regions hs = permutations hs
 
+-- Gets the interfaces that border a given region
 get_boundaries :: (SingI n) => Region n -> [Region n]
 get_boundaries [] = []
 get_boundaries (h:hs) = (([h, (get_dual h)] ++ hs) : ((h:) <$> (get_boundaries hs)))
+
+-- Gets the regions that border a given region
+get_adjacent_region :: (SingI n) => Region n -> [Region n]
+get_adjacent_region [] = []
+get_adjacent_region (h:hs) = (([(get_dual h)] ++ hs) : ((h:) <$> (get_regions hs)))
