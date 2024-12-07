@@ -48,7 +48,8 @@ in_space (Zeta n r) v = (n <.> v) <= r
 cost_function :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R ->  Vec n R -> R
 cost_function g x y = norm (y |-| x) / norm (proj g y)
 
-from_halfspace
+from_halfspace :: (RealVec (Vec n R)) => HalfSpace n -> (Vec n R -> R)
+from_halfspace (Zeta n r) = -(pnorm 1 n) + r
 
 
 --Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
