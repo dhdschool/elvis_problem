@@ -48,9 +48,9 @@ in_space (Zeta n r) v = (n <.> v) <= r
 cost_function :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R ->  Vec n R -> R
 cost_function g x y = norm (y |-| x) / norm (proj g y)
 
-from_halfspace :: (RealVec (Vec n R)) => HalfSpace n -> (Vec n R -> R)
-from_halfspace (Zeta n r) = -(pnorm 1 n) + r
-
+-- Converting a halfspace into a constraint function (these will not be bounded by definition, use with caution)
+from_halfspace :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> R
+from_halfspace (Zeta n r) v = (n <.> v) - r
 
 --Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
 -- exponential/binary search)
@@ -65,8 +65,10 @@ gradient_descent_ b gradient y0 episilon
     | otherwise = y0 where
         descend = y0 |-| (episilon |*| gradient(y0))
 
-y_single :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R -> Vec n R
-y_single g x = ((gradient_descent_ 0) $! (grad (cost_function g x))) y 1 where
-    y = 
+y_single :: (RealVec (Vec n R), CSet m n, CSet k n) => VSet m n -> VSet k n -> Vec n R -> Vec n R -> HalfSpace n -> Vec n R
+y_single g0 g1 x0 x1 (Zeta n r) = ((gradient_descent_ 0) $! (grad cost)) y 1 where
+    y = lambda |*| (x1|-|x0)
+    lambda = r / (n<.>x1 - n<.>x0)
+    cost v = (cost_function g0 x0 v) + (cost_function g1 x1 v)
 
 
