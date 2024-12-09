@@ -133,17 +133,23 @@ region_from_points (r:rs) x
     | in_region r x = r  
     | otherwise = region_from_points rs x
 
--- Creates an adjacency list for the use of a graph from a list of regions and a start and end vector
+-- Creates an adjacency list for the use of a graph given a list of regions and a start and end vector
 elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  [(R, Region n, [Region n])]
-elvis_graph regions x0 x1 = construct_alist_ visited start_region end_region where
+elvis_graph regions x0 x1 = graph where
+    (_, graph) = construct_alist_ visited start_region
     start_region = region_from_points regions x0
     end_region = region_from_points regions x1
     visited = HashSet.empty 
 
 -- Internal adjacency list creator
-construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> Region n -> Region n -> [(R, Region n, [Region n])]
-construct_alist_ vs r1 r2
-    | HashSet.member r1 vs = []
-    | otherwise = [(0, r1, adj)] ++ construct_alist_ v r1 r2 where
-    v = HashSet.insert r1 vs
-    adj = get_adjacent_region r1
+construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> Region n -> (HashSet.HashSet (Region n), [(R, Region n, [Region n])])
+construct_alist_ vs start
+    | HashSet.member start vs = (vs, [])
+    | otherwise = (vss, [((0::R), start, adj)] ++ sublist) where
+    sublist = foldr (++) [] graphlist
+    vss = HashSet.unions (setlist ++ [v])
+    v = HashSet.insert start vs
+    adj = get_adjacent_region start
+    (setlist, graphlist) = unzip ((construct_alist_ v) <$> adj)
+    
+
