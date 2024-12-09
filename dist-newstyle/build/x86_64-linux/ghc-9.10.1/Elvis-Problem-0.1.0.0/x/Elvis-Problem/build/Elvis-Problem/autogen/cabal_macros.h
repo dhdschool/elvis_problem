@@ -50,6 +50,16 @@
   (major1) == 0 && (major2) <  7 || \
   (major1) == 0 && (major2) == 7 && (minor) <= 10)
 #endif /* MIN_VERSION_ghc_typelits_natnormalise */
+/* package hashable-1.5.0.0 */
+#ifndef VERSION_hashable
+#define VERSION_hashable "1.5.0.0"
+#endif /* VERSION_hashable */
+#ifndef MIN_VERSION_hashable
+#define MIN_VERSION_hashable(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  5 || \
+  (major1) == 1 && (major2) == 5 && (minor) <= 0)
+#endif /* MIN_VERSION_hashable */
 /* package numbers-3000.2.0.2 */
 #ifndef VERSION_numbers
 #define VERSION_numbers "3000.2.0.2"

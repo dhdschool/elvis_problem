@@ -25,6 +25,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# Language MultiParamTypeClasses#-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- Do dogs know calculus?
 module Elvis where
@@ -33,8 +34,8 @@ import FixedVector
 import RealVector
 import ConvexSet
 
-import Data.Graph
-import qualified Data.HashSet
+import Data.Hashable
+import qualified Data.HashSet as HashSet
 
 import Data.Kind (Type)
 import Data.Singletons
@@ -45,8 +46,20 @@ import Data.List (permutations)
 data HalfSpace :: Nat -> Type where
     Zeta :: (RealVec (Vec n R)) => Vec n R -> R -> HalfSpace n
 
+instance Eq (HalfSpace n) where
+    (==) (Zeta n1 r1) (Zeta n2 r2) 
+        | (unit n1 == unit n2) && (norm n1 * r1 == norm n2 * r2) = True
+        | otherwise = False
+
+-- Suboptimal built in-hash, should be replaced for performance
+instance (SingI n) => Hashable (HalfSpace n) where
+    hashWithSalt :: Int -> HalfSpace n -> Int
+    hashWithSalt salt (Zeta n r) = round (norm (n |+| vecreplicate (fromIntegral salt)) + r)
+
+
 -- Region formed by the intersection of a list of halfspaces
 type Region n = [HalfSpace n]
+
 
 -- Determining whether a vector is within a halfspace
 in_space :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> Bool
@@ -110,3 +123,27 @@ get_boundaries (h:hs) = (([h, (get_dual h)] ++ hs) : ((h:) <$> (get_boundaries h
 get_adjacent_region :: (SingI n) => Region n -> [Region n]
 get_adjacent_region [] = []
 get_adjacent_region (h:hs) = (([(get_dual h)] ++ hs) : ((h:) <$> (get_regions hs)))
+
+-- There's definitely a faster way to implement this than search (from O(n) -> O(1))
+-- This searches all regions in a given list and returns the region that contains the points, with an empty
+-- list if no regions contain the point
+region_from_points :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Region n
+region_from_points [] _ = []
+region_from_points (r:rs) x
+    | in_region r x = r  
+    | otherwise = region_from_points rs x
+
+-- Creates an adjacency list for the use of a graph from a list of regions and a start and end vector
+elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  [(R, Region n, [Region n])]
+elvis_graph regions x0 x1 = construct_alist_ visited start_region end_region where
+    start_region = region_from_points regions x0
+    end_region = region_from_points regions x1
+    visited = HashSet.empty 
+
+-- Internal adjacency list creator
+construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> Region n -> Region n -> [(R, Region n, [Region n])]
+construct_alist_ vs r1 r2
+    | HashSet.member r1 vs = []
+    | otherwise = [(0, r1, adj)] ++ construct_alist_ v r1 r2 where
+    v = HashSet.insert r1 vs
+    adj = get_adjacent_region r1
