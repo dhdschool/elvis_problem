@@ -34,6 +34,8 @@ import RealVector
 import ConvexSet
 
 import Data.Graph
+import qualified Data.HashSet
+
 import Data.Kind (Type)
 import Data.Singletons
 import Proj (precision_)

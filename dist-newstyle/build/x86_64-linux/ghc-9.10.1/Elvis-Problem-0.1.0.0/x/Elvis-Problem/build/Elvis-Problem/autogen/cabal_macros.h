@@ -90,6 +90,16 @@
   (major1) == 3 && (major2) <  4 || \
   (major1) == 3 && (major2) == 4 && (minor) <= 0)
 #endif /* MIN_VERSION_singletons_th */
+/* package unordered-containers-0.2.20 */
+#ifndef VERSION_unordered_containers
+#define VERSION_unordered_containers "0.2.20"
+#endif /* VERSION_unordered_containers */
+#ifndef MIN_VERSION_unordered_containers
+#define MIN_VERSION_unordered_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  2 || \
+  (major1) == 0 && (major2) == 2 && (minor) <= 20)
+#endif /* MIN_VERSION_unordered_containers */
 /* package vector-0.13.2.0 */
 #ifndef VERSION_vector
 #define VERSION_vector "0.13.2.0"

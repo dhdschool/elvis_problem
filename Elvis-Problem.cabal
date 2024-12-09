@@ -81,7 +81,8 @@ executable Elvis-Problem
         singletons-th >= 3.4 && < 3.5,
         singletons-base >= 3.4 && < 3.5,
         numbers >= 3000.2.0.2 && < 3002.3,
-        containers >= 0.7 && < 0.8
+        containers >= 0.7 && < 0.8,
+        unordered-containers >= 0.2.20 && < 0.2.21
 
     -- Directories containing source files.
     hs-source-dirs:   app
