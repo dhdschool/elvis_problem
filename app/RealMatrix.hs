@@ -29,14 +29,16 @@ module RealMatrix where
 
 import FixedVector
 import RealVector
-
+import Proj (precision_)
 import Data.Singletons
 
+-- Zero matrix of given size
 zeroMat_ :: (SingI n) => Sing m -> Matrix m n
 zeroMat_ = \case
     SZ -> Nil
     SS l -> zeroVecs :# zeroMat_ l
 
+-- Zero matrix of implicit size
 zeroMat :: (SingI m, SingI n) => Matrix m n
 zeroMat = vecreplicate (vecreplicate (0::R))
 
@@ -56,10 +58,13 @@ identityTensor_ = \case
 identityTensor :: (RealVec (Vec n R), SingI n, SingI m) => Vec m (Vec n (Matrix m n))
 identityTensor = identityTensor_ sing
 
+-- Wrapper type for matrices
 type Matrix m n = Vec m (Vec n R)
 
+-- Class defining operations on matrices
 class RealMat m where
     (#+#) :: m -> m -> m
+    (#-#) :: m -> m -> m
     scal :: R -> m -> m
     mat_dirDerivative :: (m -> R) -> m -> m -> R
     mat_grad :: (m -> R) -> m -> m
@@ -70,6 +75,11 @@ mat_add_ = \case
     SZ -> \_ -> \_ -> Nil
     SS l -> \(x:#xs) -> \(y:#ys) -> (x|+|y) :# (mat_add_ l xs ys) 
 
+mat_sub_ :: (RealVec (Vec n R)) => Sing m -> Matrix m n -> Matrix m n -> Matrix m n
+mat_sub_ = \case
+    SZ -> \_ -> \_ -> Nil
+    SS l -> \(x:#xs) -> \(y:#ys) -> (x|-|y) :# (mat_sub_ l xs ys) 
+
 mat_scalar_mult_ :: (RealVec (Vec n R)) => Sing m -> R -> Matrix m n -> Matrix m n
 mat_scalar_mult_ = \case
     SZ -> \_ -> \_ -> Nil
@@ -77,9 +87,17 @@ mat_scalar_mult_ = \case
 
 instance (SingI m, RealVec (Vec n R), SingI n) => RealMat (Matrix m n) where
     (#+#) a b = mat_add_ sing a b
+    (#-#) a b = mat_sub_ sing a b
     scal t a = mat_scalar_mult_ sing t a
     mat_dirDerivative f x m = (f (x #+# (scal t m)) - f x) / t where
         t = 10 ** (- (fromInteger precision))
-
     mat_grad f a = generate (\i -> 
         generate(\j -> mat_dirDerivative f a (index j (index i identityTensor)) )) 
+
+matrix_gradient_descent_ :: (RealVec (Vec n R), RealMat (Matrix m n)) => R -> (Matrix m n -> R) -> (Matrix m n -> Matrix m n) -> Matrix m n -> R -> Matrix m n
+matrix_gradient_descent_ b c grad_c ys0 episilon
+    | b >= precision_ = ys0 
+    | c (ys) > c (ys0) = matrix_gradient_descent_ (b+1) c grad_c ys0 (episilon/2)
+    | c (ys0) >= c (ys) = matrix_gradient_descent_ (b+1) c grad_c ys (episilon*2) 
+    | otherwise = ys0 where
+        ys = ys0 #-# (scal episilon (grad_c ys0))
