@@ -33,7 +33,7 @@ import           Data.Kind
 import           Data.Singletons
 import           Data.Singletons.TH
 import           Data.Singletons.Base.TH
-import Data.Number.BigFloat
+
 
 
 -- This is template haskell, the official haskell metaprogramming language
@@ -109,13 +109,15 @@ zipVec = \case
     x:#xs -> \case
         y:#ys -> (x, y) :# zipVec xs ys
 
--- Defining addition and subtraction on the type level for successor nats
+--Defining addition and subtraction on the type level for successor nats
 type family (n::Nat) + (m::Nat) :: Nat where
     'Z + m = m
     'S n + m = 'S (n+m)
 
 type family (n::Nat) - (m::Nat) :: Nat where
     'S n - m = 'S(n-m)
+
+
 
 -- Vector append operation
 (|++|) :: Vec n a -> Vec m a -> Vec (n+m) a
@@ -151,43 +153,3 @@ generate_ = \case
 -- Implicitly sized vector from a function of implicitly dimensioned finites
 generate :: SingI n => (Fin n -> a) -> Vec n a
 generate = generate_ sing
-
--- A type alias for the real numbers, this defines them as float with 10 decimal places of precision
-type R = BigFloat Prec10
-
-precision :: Integer
-precision = 8
-
--- A zero vector of size n
-zeroVecs_ :: Sing n -> Vec n R
-zeroVecs_ = \case
-    SZ -> Nil
-    SS l -> 0:# zeroVecs_ l
-
--- A zero vector that has an implicit size of n using haskell's powerfull type system
--- For example, if you had (3:#2:#Nil) + zeroVecs, you would not have to define the size of
--- zeroVecs because addition is only defined between vectors of the same size,
--- so Haskell assumes that the size of the zeroVec is 2
-
-zeroVecs :: (SingI n) => Vec n R
-zeroVecs = zeroVecs_ sing
-
---Identity matrix of size n x n
-baseVecs_ :: Sing n -> Vec n (Vec n R)
-baseVecs_ = \case
-    SZ -> Nil
-    SS l -> (1 :# zeroVecs_ l) :# ((0 :#) <$> baseVecs_ l)
-
---Identity square matrix of implicit size
-baseVecs :: (SingI n) => Vec n (Vec n R)
-baseVecs = baseVecs_ sing
-
--- Negative identity matrix of size n x n
-negativeVecs_ :: Sing n -> Vec n (Vec n R)
-negativeVecs_ = \case
-    SZ -> Nil
-    SS l -> (-1 :# zeroVecs_ l) :# ((0 :#) <$> negativeVecs_ l)
-
---Negative identity square matrix of implicit size
-negativeVecs :: (SingI n) => Vec n (Vec n R)
-negativeVecs = negativeVecs_ sing

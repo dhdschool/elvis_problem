@@ -31,6 +31,49 @@ module RealVector where
 
 import FixedVector
 import Data.Singletons
+import Data.Number.BigFloat
+
+
+-- A type alias for the real numbers, this defines them as float with 10 decimal places of precision
+type R = BigFloat Prec10
+
+precision :: Integer
+precision = 8
+
+-- A zero vector of size n
+zeroVecs_ :: Sing n -> Vec n R
+zeroVecs_ = \case
+    SZ -> Nil
+    SS l -> 0:# zeroVecs_ l
+
+-- A zero vector that has an implicit size of n using haskell's powerfull type system
+-- For example, if you had (3:#2:#Nil) + zeroVecs, you would not have to define the size of
+-- zeroVecs because addition is only defined between vectors of the same size,
+-- so Haskell assumes that the size of the zeroVec is 2
+
+zeroVecs :: (SingI n) => Vec n R
+zeroVecs = vecreplicate (0::R)
+
+--Identity matrix of size n x n
+baseVecs_ :: Sing n -> Vec n (Vec n R)
+baseVecs_ = \case
+    SZ -> Nil
+    SS l -> (1 :# zeroVecs_ l) :# ((0 :#) <$> baseVecs_ l)
+
+--Identity square matrix of implicit size
+baseVecs :: (SingI n) => Vec n (Vec n R)
+baseVecs = baseVecs_ sing
+
+-- Negative identity matrix of size n x n
+negativeVecs_ :: Sing n -> Vec n (Vec n R)
+negativeVecs_ = \case
+    SZ -> Nil
+    SS l -> (-1 :# zeroVecs_ l) :# ((0 :#) <$> negativeVecs_ l)
+
+--Negative identity square matrix of implicit size
+negativeVecs :: (SingI n) => Vec n (Vec n R)
+negativeVecs = negativeVecs_ sing
+
 
 -- Associated type signatures and operations with real vectors
 class RealVec v where  
@@ -45,6 +88,7 @@ class RealVec v where
     dirDerivative :: (v -> R) -> v -> v -> R
     grad :: (v -> R) -> v -> v
     pnorm :: Integer -> v -> R
+    
 
 -- Norm of vector of size n
 norm_ :: Sing n -> Vec n R -> R

@@ -47,6 +47,7 @@ class (RealVec (Vec n R), Applicative (Vec m)) => CSet m n where
     (<+>) :: (CSet m n) => VSet m n -> MinkowskiSum n -> VSet m n
     proj :: VSet m n  -> Vec n R -> Vec n R
     distance :: VSet m n -> Vec n R -> R
+    
 
 --implicit function for resolving vector existance in minkowski sums
 contains_add :: (RealVec (Vec n R), SingI n) => MinkowskiSum n -> Vec n R -> Bool
