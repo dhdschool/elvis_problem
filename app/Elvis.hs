@@ -78,18 +78,21 @@ from_halfspace (Zeta n r) v = (n <.> v) - r
 
 -- Upon writing this I realize that my previous approximation methods are contrived versions of gradient descent
 
-gradient_descent_ :: (RealVec (Vec n R)) => R -> (Vec n R -> Vec n R) -> Vec n R -> R -> Vec n R
-gradient_descent_ b gradient y0 episilon
+gradient_descent_ :: (RealVec (Vec n R)) => R -> (Vec n R -> R) -> (Vec n R -> Vec n R) -> Vec n R -> R -> Vec n R
+gradient_descent_ b cost gradient y0 episilon
     | b >= precision_ = y0
-    | norm (gradient descend) > norm (gradient y0) = gradient_descent_ (b+1) gradient y0 (episilon/2)
-    | norm (gradient y0) >= norm (gradient descend) = gradient_descent_ (b+1) gradient descend (episilon*2) 
+    | cost descend > cost y0 = gradient_descent_ (b+1) cost gradient y0 (episilon/2)
+    | cost y0 >= cost descend = gradient_descent_ (b+1) cost gradient descend (episilon*2) 
     | otherwise = y0 where
         descend = y0 |-| (episilon |*| gradient(y0))
+
+gradient_descent :: (RealVec (Vec n R)) => (Vec n R -> R) -> Vec n R -> Vec n R
+gradient_descent cost y0 = gradient_descent_ 0 cost (grad cost) y0 1
 
 -- Solves the elvis problem with a single interface and two constraint sets, where x0 is on the side of the interface
 -- associated with g0, and x1 is on the side associated with g1
 elvis_single :: (RealVec (Vec n R), CSet m n, CSet k n) => VSet m n ->  Vec n R -> VSet k n -> Vec n R -> HalfSpace n -> Vec n R
-elvis_single g0 x0 g1 x1 h= ((gradient_descent_ 0) $! (grad cost)) y 1 where
+elvis_single g0 x0 g1 x1 h= gradient_descent cost y where
     y = interface_intersect x0 x1 h
     cost v = (cost_function g0 x0 v) + (cost_function g1 v x1)
 

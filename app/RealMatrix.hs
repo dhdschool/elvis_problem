@@ -95,9 +95,12 @@ instance (SingI m, RealVec (Vec n R), SingI n) => RealMat (Matrix m n) where
         generate(\j -> mat_dirDerivative f a (index j (index i identityTensor)) )) 
 
 matrix_gradient_descent_ :: (RealVec (Vec n R), RealMat (Matrix m n)) => R -> (Matrix m n -> R) -> (Matrix m n -> Matrix m n) -> Matrix m n -> R -> Matrix m n
-matrix_gradient_descent_ b c grad_c ys0 episilon
+matrix_gradient_descent_ b cost grad_cost ys0 episilon
     | b >= precision_ = ys0 
-    | c (ys) > c (ys0) = matrix_gradient_descent_ (b+1) c grad_c ys0 (episilon/2)
-    | c (ys0) >= c (ys) = matrix_gradient_descent_ (b+1) c grad_c ys (episilon*2) 
+    | cost (ys) > cost (ys0) = matrix_gradient_descent_ (b+1) cost grad_cost ys0 (episilon/2)
+    | cost (ys0) >= cost (ys) = matrix_gradient_descent_ (b+1) cost grad_cost ys (episilon*2) 
     | otherwise = ys0 where
-        ys = ys0 #-# (scal episilon (grad_c ys0))
+        ys = ys0 #-# (scal episilon (grad_cost ys0))
+
+matrix_gradient_descent :: (RealVec (Vec n R), RealMat (Matrix m n)) => (Matrix m n -> R) -> Matrix m n -> Matrix m n
+matrix_gradient_descent cost ys0 = matrix_gradient_descent_ 0 cost (mat_grad cost) ys0 1
