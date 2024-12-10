@@ -79,7 +79,7 @@ scmult_ = \case
 pnorm_ :: Sing n -> Integer -> Vec n R -> R
 pnorm_ = \case
     SZ -> \_ -> \_ -> 0
-    SS l -> \power -> \(x:#xs) -> x^power + pnorm_ l power xs
+    SS l -> \power -> \(x:#xs) -> abs (x^power) + pnorm_ l power xs
 
 -- Declares that all Vectors of size n that have real values are real vectors
 instance (SingI (n::Nat)) => RealVec (Vec n R) where  

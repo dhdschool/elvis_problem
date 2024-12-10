@@ -91,7 +91,7 @@ gradient_descent_ b gradient y0 episilon
 elvis_single :: (RealVec (Vec n R), CSet m n, CSet k n) => VSet m n ->  Vec n R -> VSet k n -> Vec n R -> HalfSpace n -> Vec n R
 elvis_single g0 x0 g1 x1 h= ((gradient_descent_ 0) $! (grad cost)) y 1 where
     y = interface_intersect x0 x1 h
-    cost v = (cost_function g0 x0 v) + (cost_function g1 x1 v)
+    cost v = (cost_function g0 x0 v) + (cost_function g1 v x1)
 
 -- Gives the vector on an interface assuming that the interface is between the vectors x0 and x1
 interface_intersect :: (RealVec (Vec n R)) => Vec n R -> Vec n R -> HalfSpace n -> Vec n R
@@ -133,9 +133,10 @@ region_from_points (r:rs) x
     | in_region r x = r  
     | otherwise = region_from_points rs x
 
--- Creates an adjacency list for the use of a graph given a list of regions and a start and end vector
-elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  [(R, Region n, [Region n])]
-elvis_graph regions x0 x1 = graph where
+-- Creates a graph for the use of a graph given a list of regions and a start and end vector,
+-- this returns the start region, the end region, and the associated graph
+elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  (Region n, Region n, [(R, Region n, [Region n])])
+elvis_graph regions x0 x1 = (start_region, end_region, graph) where
     (_, graph) = construct_alist_ visited start_region
     start_region = region_from_points regions x0
     end_region = region_from_points regions x1
@@ -151,5 +152,4 @@ construct_alist_ vs start
     v = HashSet.insert start vs
     adj = get_adjacent_region start
     (setlist, graphlist) = unzip ((construct_alist_ v) <$> adj)
-    
 
