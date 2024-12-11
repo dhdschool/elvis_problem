@@ -169,3 +169,16 @@ generate_ = \case
 -- Implicitly sized vector from a function of implicitly dimensioned finites
 generate :: SingI n => (Fin n -> a) -> Vec n a
 generate = generate_ sing
+
+fromList_ :: Sing n -> [a] -> Maybe (Vec n a)
+fromList_ = \case
+    SZ -> \case
+        [] -> Just Nil
+        _ -> Nothing
+
+    SS l -> \case
+        [] -> Nothing
+        (x:xs) -> (x:#) <$> (fromList_ l xs)
+
+fromList :: (SingI n) => [a] -> Maybe (Vec n a)
+fromList x = fromList_ sing x

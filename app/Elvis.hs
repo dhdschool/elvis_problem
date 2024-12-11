@@ -41,7 +41,7 @@ import Data.Singletons
 import Proj (precision_)
 import Data.Foldable
 
-newtype VelocityRegion n = M (Region n, VSet n)
+type VelocityRegion m n = (Vec m (Region n), Vec m (VSet n))
 
 -- Cost function associated with moving in a velocity set towards a point (vector valued function of two inputs)
 cost_function_single :: (RealVec (Vec n R), CSet n) => VSet n -> Vec n R ->  Vec n R -> R
@@ -118,18 +118,27 @@ construct_alist_ vs (x0, x1) start
     (setlist, graphlist) = unzip ((construct_alist_ v (x0, x1)) <$> adj)
 
 -- You had best ensure that these two are the same size before executing this function
-velocity_region_map :: [Region n] -> [VSet n] -> [VelocityRegion n]
-velocity_region_map h s = M <$> zip h s 
+velocity_region_map :: [(Region n)] -> [(VSet n)] -> Maybe (VelocityRegion m n)
+velocity_region_map h s = 
 
-get_velocity_set :: Region n -> [VelocityRegion n] -> Maybe (VSet n)
-get_velocity_set _ [] = Nothing
-get_velocity_set region (M (region_i, set_i) : next)
-    | region == region_i = Just set_i 
-    | otherwise = get_velocity_set region next
+get_velocity_set_ :: Sing m -> Region n -> VelocityRegion m n -> Maybe (VSet n)
+get_velocity_set_ = \case
+    SZ -> \_ -> \_ -> Nothing
+    SS l -> \region -> \(this_region:#rtail, this_set:#stail) -> 
+        if region == this_region then Just this_set
+        else get_velocity_set_ l region (rtail, stail)
+
+get_velocity_set :: (SingI m) => Region n -> VelocityRegion m n -> Maybe (VSet n)
+get_velocity_set region regions = get_velocity_set_ sing region regions    
+
+-- get_velocity_set_ _ Nil = Nothing
+-- get_velocity_set_ region ((region_i, set_i) : next)
+--     | region == region_i = Just set_i 
+--     | otherwise = get_velocity_set region next
 
 
-dfs_end :: (RealVec (Vec n R), SingI n) => [VelocityRegion n] -> [(Region n, [(Region n, Vec n R)])] -> (Matrix m n, [VSet n])
-dfs_end _ [] = (Nil, [])
+dfs_end :: (RealVec (Vec n R), SingI n, RealMat (Matrix m n)) => VelocityRegion m n -> [(Region n, [(Region n, Vec n R)])] -> (Matrix m n, [VSet n])
+
 dfs_end vsregion ((current_region, adj_interfaces) : node_tail) = case maybeVal of 
     Nothing -> []
     Just vset -> (zip vectors (replicate (length vectors) vset)) ++ (dfs_end vsregion node_tail)
