@@ -61,14 +61,16 @@ instance (SingI n) => Hashable (HalfSpace n) where
 type Region n = [HalfSpace n]
 
 -- Region associated with a velocity set
-newtype VelocityRegion n = M (Region n, VSet m n)
+-- As of now, you must MANUALLY associate velocities with regions
+-- This is because how am I to know which regions have what velocity sets at compile time?
+newtype VelocityRegion n = M (Region n, VSet n)
 
 -- Determining whether a vector is within a halfspace
 in_space :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> Bool
 in_space (Zeta n r) v = (n <.> v) <= r
 
 -- Cost function associated with moving in a velocity set towards a point
-cost_function :: (RealVec (Vec n R), CSet m n) => VSet m n -> Vec n R ->  Vec n R -> R
+cost_function :: (RealVec (Vec n R), CSet n) => VSet n -> Vec n R ->  Vec n R -> R
 cost_function g x y = norm (y |-| x) / norm (proj g y)
 
 -- Converting a halfspace into a constraint function (these will not be bounded by definition, use with caution)
@@ -93,7 +95,7 @@ gradient_descent cost y0 = gradient_descent_ 0 cost (grad cost) y0 1
 
 -- Solves the elvis problem with a single interface and two constraint sets, where x0 is on the side of the interface
 -- associated with g0, and x1 is on the side associated with g1
-elvis_single :: (RealVec (Vec n R), CSet m n, CSet k n) => VSet m n ->  Vec n R -> VSet k n -> Vec n R -> HalfSpace n -> Vec n R
+elvis_single :: (RealVec (Vec n R), CSet n, CSet n) => VSet n ->  Vec n R -> VSet n -> Vec n R -> HalfSpace n -> Vec n R
 elvis_single g0 x0 g1 x1 h= gradient_descent cost y where
     y = interface_intersect x0 x1 h
     cost v = (cost_function g0 x0 v) + (cost_function g1 v x1)
@@ -179,10 +181,12 @@ boundary_points region = f <$> region where
 boundary_points_restricted ::  (RealVec (Vec n R), SingI n) => Region n -> Vec n R -> Vec n R -> [Vec n R]
 boundary_points_restricted region x0 x1 = filter (\v -> norm (v|-|x1) < norm (x0|-|x1)) (boundary_points region)
 
-associate_velocity :: Region n -> VSet m n -> VelocityRegion n
-associate_veloi
 
-dfs_end :: (RealVec (Vec n R), SingI n) => [([Vec n R], VelocityRegion n, [Region n])] -> [(Vec n R, VSet m n)]
+-- You had best ensure that these two are the same size before executing this function
+velocity_region_map :: [Region n] -> [VSet n] -> [VelocityRegion n]
+velocity_region_map h s = M <$> zip h s 
+
+dfs_end :: (RealVec (Vec n R), SingI n) => [([Vec n R], Region n, [Region n])] -> [(Vec n R, VSet n)]
 
 
 test_space_x :: HalfSpace (Lit 2)
@@ -204,9 +208,15 @@ test_x1 = (1):#(-1):#Nil
 test_g1 :: Vec (Lit 2) R -> R
 test_g1 v = (index (dim 1) v) ^ (2::Integer) + (index (dim 2) v) ^ (2::Integer) - 1
 
+test_G1 :: VSet (Lit 2)
+test_G1 = [[test_g1]]
+
 --Ellipsoid skewed in the y axis
 test_g2 :: Vec (Lit 2) R -> R
 test_g2 v = (index (dim 1) v)^(2::Integer) + (((index (dim 1) v) + 1)^(2::Integer))/4 - 1
+
+test_G2 :: VSet (Lit 2)
+test_G2 = [[test_g2]]
 
 test_start :: Region (Lit 2)
 test_end :: Region (Lit 2)
