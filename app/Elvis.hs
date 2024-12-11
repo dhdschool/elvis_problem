@@ -60,7 +60,6 @@ instance (SingI n) => Hashable (HalfSpace n) where
 -- Region formed by the intersection of a list of halfspaces
 type Region n = [HalfSpace n]
 
-
 -- Determining whether a vector is within a halfspace
 in_space :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> Bool
 in_space (Zeta n r) v = (n <.> v) <= r
@@ -117,6 +116,11 @@ get_dual (Zeta n r) = Zeta (zeroVecs |-| n) r
 get_regions :: [HalfSpace n] -> [Region n]
 get_regions hs = permutations hs
 
+-- Generates regions from a given set of halfspaces (without duals) that creates regions spanning R^n
+-- for example, if you had two halfspaces this would return you the four regions created by their intersections
+generate_Rn :: (SingI n) => [HalfSpace n] -> [Region n]
+generate_Rn hs = get_regions (hs ++ (get_dual <$> hs))
+
 -- Gets the interfaces that border a given region
 get_boundaries :: (SingI n) => Region n -> [Region n]
 get_boundaries [] = []
@@ -126,6 +130,9 @@ get_boundaries (h:hs) = (([h, (get_dual h)] ++ hs) : ((h:) <$> (get_boundaries h
 get_adjacent_region :: (SingI n) => Region n -> [Region n]
 get_adjacent_region [] = []
 get_adjacent_region (h:hs) = (([(get_dual h)] ++ hs) : ((h:) <$> (get_regions hs)))
+
+get_adjacent_region_restricted :: (SingI n) => Region n -> Vec n R -> Vec n R -> [Region n]
+get_adjacent_region_restricted region x0 x1 = (filter (\(Zeta n r) -> norm (((-r) |*| n)|-|x1) < norm (x0|-|x1))) <$> (get_adjacent_region region) 
 
 -- There's definitely a faster way to implement this than search (from O(n) -> O(1))
 -- This searches all regions in a given list and returns the region that contains the points, with an empty
@@ -138,21 +145,64 @@ region_from_points (r:rs) x
 
 -- Creates a graph for the use of a graph given a list of regions and a start and end vector,
 -- this returns the start region, the end region, and the associated graph
-elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  (Region n, Region n, [(R, Region n, [Region n])])
+elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  (Region n, Region n, [([Vec n R], Region n, [Region n])])
 elvis_graph regions x0 x1 = (start_region, end_region, graph) where
-    (_, graph) = construct_alist_ visited start_region
+    (_, graph) = construct_alist_ visited (x0, x1) start_region
     start_region = region_from_points regions x0
     end_region = region_from_points regions x1
     visited = HashSet.empty 
 
 -- Internal adjacency list creator
-construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> Region n -> (HashSet.HashSet (Region n), [(R, Region n, [Region n])])
-construct_alist_ vs start
+construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> (Vec n R, Vec n R) -> Region n -> (HashSet.HashSet (Region n), [([Vec n R], Region n, [Region n])])
+construct_alist_ vs (x0, x1) start
     | HashSet.member start vs = (vs, [])
-    | otherwise = (vss, [((0::R), start, adj)] ++ sublist) where
+    | otherwise = (vss, [(boundary_points_restricted start x0 x1, start, adj)] ++ sublist) where
     sublist = foldr (++) [] graphlist
     vss = HashSet.unions (setlist ++ [v])
     v = HashSet.insert start vs
-    adj = get_adjacent_region start
-    (setlist, graphlist) = unzip ((construct_alist_ v) <$> adj)
+    adj = get_adjacent_region_restricted start x0 x1
+    (setlist, graphlist) = unzip ((construct_alist_ v (x0, x1)) <$> adj)
+
+-- Takes in a region in R^n and returns points on the interface of 
+-- of the neighbouring regions of said region
+
+boundary_points :: (RealVec (Vec n R), SingI n) => Region n -> [Vec n R]
+boundary_points region = f <$> region where
+    f (Zeta n r) = (-r) |*| n
+
+-- X is a point in the region (potentially in the interface)
+boundary_points_restricted ::  (RealVec (Vec n R), SingI n) => Region n -> Vec n R -> Vec n R -> [Vec n R]
+boundary_points_restricted region x0 x1 = filter (\v -> norm (v|-|x1) < norm (x0|-|x1)) (boundary_points region)
+
+
+--get_paths_graph :: (RealVec (Vec n R), SingI n) => (Region n, Region n, [(R, Region n, [Region n])]) -> 
+
+
+test_space_x :: HalfSpace (Lit 2)
+test_space_x = Zeta (0:#1:#Nil) 0
+
+test_space_y :: HalfSpace (Lit 2)
+test_space_y = Zeta (1:#0:#Nil) 0
+
+test_quadrants :: [Region (Lit 2)]
+test_quadrants = generate_Rn [test_space_x, test_space_y]
+
+test_x0 :: Vec (Lit 2) R
+test_x0 = (-1):#(1):#Nil
+
+test_x1 :: Vec (Lit 2) R
+test_x1 = (1):#(-1):#Nil
+
+--Unit circle
+test_g1 :: Vec (Lit 2) R -> R
+test_g1 v = (index (dim 1) v) ^ (2::Integer) + (index (dim 2) v) ^ (2::Integer) - 1
+
+--Ellipsoid skewed in the y axis
+test_g2 :: Vec (Lit 2) R -> R
+test_g2 v = (index (dim 1) v)^(2::Integer) + (((index (dim 1) v) + 1)^(2::Integer))/4 - 1
+
+test_start :: Region (Lit 2)
+test_end :: Region (Lit 2)
+test_graph :: [([Vec (Lit 2) R], Region (Lit 2), [Region (Lit 2)])]
+(test_start, test_end, test_graph) = elvis_graph test_quadrants test_x0 test_x1
 

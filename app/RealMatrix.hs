@@ -43,8 +43,9 @@ zeroMat :: (SingI m, SingI n) => Matrix m n
 zeroMat = vecreplicate (vecreplicate (0::R))
 
 -- This one sits on a pallid bust of Pallis above my chamber door
--- The identity tensor, this provides base matricies for derivatives in the direction of matricies given a specified
--- number of constraints m
+-- The identity tensor of R ^ (n x m x n x m) represented here as a hypercube
+-- This provides base matricies for derivatives in the direction of matricies given a specified
+-- number of constraints m that are vectors in R^n
 identityTensor_ :: (RealVec (Vec n R), SingI n) => Sing m -> Vec m (Vec n (Matrix m n))
 identityTensor_ = \case
     SZ -> Nil 
@@ -93,6 +94,13 @@ instance (SingI m, RealVec (Vec n R), SingI n) => RealMat (Matrix m n) where
         t = 10 ** (- (fromInteger precision))
     mat_grad f a = generate (\i -> 
         generate(\j -> mat_dirDerivative f a (index j (index i identityTensor)) )) 
+
+-- Gradient descent across a matrix valued function
+-- b is the precision cutoff
+-- cost is the matrix valued function 
+-- grad cost is the matrix gradient of the cost function
+-- ys0 is the starting matrix
+-- episilon is the adjusting level of precision within the minimum
 
 matrix_gradient_descent_ :: (RealVec (Vec n R), RealMat (Matrix m n)) => R -> (Matrix m n -> R) -> (Matrix m n -> Matrix m n) -> Matrix m n -> R -> Matrix m n
 matrix_gradient_descent_ b cost grad_cost ys0 episilon
