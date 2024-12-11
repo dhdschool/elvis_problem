@@ -23,6 +23,7 @@
 {-# LANGUAGE UndecidableInstances#-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 -- An arrow with both direction and magnitude
 
@@ -132,6 +133,21 @@ index = \case
         x:#_ -> x
     FS i -> \case
         _ :# xs -> index i xs
+
+getFirst :: Vec (S n) a -> a
+getFirst = \case
+    (x:#_) -> x
+
+getLast :: Vec (S n) a -> a
+getLast = \case
+    (x:#Nil) -> x
+    (_:#xs) -> getLast_ xs
+
+getLast_ :: (Vec n a -> a)
+getLast_ = \case 
+    (x:#Nil) -> x
+    (_:#xs) -> getLast_ xs
+
 
 -- Generating a vector of size n where every value is a given scalar
 vecreplicate_ :: Sing n -> a -> Vec n a

@@ -68,6 +68,7 @@ executable Elvis-Problem
         Proj
         ConvexSet
         RealMatrix
+        Region
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
