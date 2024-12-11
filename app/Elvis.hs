@@ -60,6 +60,9 @@ instance (SingI n) => Hashable (HalfSpace n) where
 -- Region formed by the intersection of a list of halfspaces
 type Region n = [HalfSpace n]
 
+-- Region associated with a velocity set
+newtype VelocityRegion n = M (Region n, VSet m n)
+
 -- Determining whether a vector is within a halfspace
 in_space :: (RealVec (Vec n R)) => HalfSpace n -> Vec n R -> Bool
 in_space (Zeta n r) v = (n <.> v) <= r
@@ -170,12 +173,16 @@ boundary_points :: (RealVec (Vec n R), SingI n) => Region n -> [Vec n R]
 boundary_points region = f <$> region where
     f (Zeta n r) = (-r) |*| n
 
--- X is a point in the region (potentially in the interface)
+-- Some points that are on the boundary of the intersections containg current region
+-- that are closer to the target than the origin
+-- These points can be used to estimate the correct values
 boundary_points_restricted ::  (RealVec (Vec n R), SingI n) => Region n -> Vec n R -> Vec n R -> [Vec n R]
 boundary_points_restricted region x0 x1 = filter (\v -> norm (v|-|x1) < norm (x0|-|x1)) (boundary_points region)
 
+associate_velocity :: Region n -> VSet m n -> VelocityRegion n
+associate_veloi
 
---get_paths_graph :: (RealVec (Vec n R), SingI n) => (Region n, Region n, [(R, Region n, [Region n])]) -> 
+dfs_end :: (RealVec (Vec n R), SingI n) => [([Vec n R], VelocityRegion n, [Region n])] -> [(Vec n R, VSet m n)]
 
 
 test_space_x :: HalfSpace (Lit 2)
