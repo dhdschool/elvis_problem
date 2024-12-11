@@ -117,6 +117,10 @@ whole_space h = [h, get_dual h]
 get_dual :: (SingI n) => HalfSpace n -> HalfSpace n
 get_dual (Zeta n r) = Zeta (zeroVecs |-| n) r
 
+-- Returns the counterpart of a given halfspace and a vector thats guaranteed to be on the intersection between halfspaces
+get_dual_interface :: (SingI n) => HalfSpace n -> (HalfSpace n, Vec n R)
+get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) r, (-r) |*| n)
+
 -- Returns the regions in space created by the intersection of a list of halfspaces
 get_regions :: [HalfSpace n] -> [Region n]
 get_regions hs = permutations hs
@@ -126,18 +130,20 @@ get_regions hs = permutations hs
 generate_Rn :: (SingI n) => [HalfSpace n] -> [Region n]
 generate_Rn hs = get_regions (hs ++ (get_dual <$> hs))
 
--- Gets the interfaces that border a given region
+-- Gets the interfaces that border a given region and a vector on that interface
 get_boundaries :: (SingI n) => Region n -> [Region n]
 get_boundaries [] = []
 get_boundaries (h:hs) = (([h, (get_dual h)] ++ hs) : ((h:) <$> (get_boundaries hs)))
 
 -- Gets the regions that border a given region
-get_adjacent_region :: (SingI n) => Region n -> [Region n]
+get_adjacent_region :: (SingI n, RealVec (Vec n R)) => Region n -> [(Region n, Vec n R)]
 get_adjacent_region [] = []
-get_adjacent_region (h:hs) = (([(get_dual h)] ++ hs) : ((h:) <$> (get_regions hs)))
+get_adjacent_region (h:hs) = zip (([adj_region] ++ hs) : ((h:) <$> (tail_region))) (adj_vec:tail_vec) where
+    (adj_region, adj_vec) = get_dual_interface h
+    (tail_region, tail_vec) = unzip $ get_adjacent_region hs
 
-get_adjacent_region_restricted :: (SingI n) => Region n -> Vec n R -> Vec n R -> [Region n]
-get_adjacent_region_restricted region x0 x1 = (filter (\(Zeta n r) -> norm (((-r) |*| n)|-|x1) < norm (x0|-|x1))) <$> (get_adjacent_region region) 
+get_adjacents :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
+get_adjacents region x0 x1 = filter (\(_, v) -> norm (v|-|x1) < norm (x0|-|x1)) (get_adjacent_region region)
 
 -- There's definitely a faster way to implement this than search (from O(n) -> O(1))
 -- This searches all regions in a given list and returns the region that contains the points, with an empty
@@ -150,7 +156,9 @@ region_from_points (r:rs) x
 
 -- Creates a graph for the use of a graph given a list of regions and a start and end vector,
 -- this returns the start region, the end region, and the associated graph
-elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  (Region n, Region n, [([Vec n R], Region n, [Region n])])
+
+-- I don't think we need [Region n] given now the [Vec n R] but lets not be hasty
+elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  (Region n, Region n, [(Region n, [(Region n, Vec n R)])])
 elvis_graph regions x0 x1 = (start_region, end_region, graph) where
     (_, graph) = construct_alist_ visited (x0, x1) start_region
     start_region = region_from_points regions x0
@@ -158,14 +166,15 @@ elvis_graph regions x0 x1 = (start_region, end_region, graph) where
     visited = HashSet.empty 
 
 -- Internal adjacency list creator
-construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> (Vec n R, Vec n R) -> Region n -> (HashSet.HashSet (Region n), [([Vec n R], Region n, [Region n])])
+construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> (Vec n R, Vec n R) -> Region n -> (HashSet.HashSet (Region n), [(Region n, [(Region n, Vec n R)])])
 construct_alist_ vs (x0, x1) start
     | HashSet.member start vs = (vs, [])
-    | otherwise = (vss, [(boundary_points_restricted start x0 x1, start, adj)] ++ sublist) where
+    | otherwise = (vss, [(start, interfaces)] ++ sublist) where
     sublist = foldr (++) [] graphlist
     vss = HashSet.unions (setlist ++ [v])
     v = HashSet.insert start vs
-    adj = get_adjacent_region_restricted start x0 x1
+    interfaces = get_adjacents start x0 x1
+    (adj, _) = unzip interfaces
     (setlist, graphlist) = unzip ((construct_alist_ v (x0, x1)) <$> adj)
 
 -- Takes in a region in R^n and returns points on the interface of 
@@ -175,18 +184,28 @@ boundary_points :: (RealVec (Vec n R), SingI n) => Region n -> [Vec n R]
 boundary_points region = f <$> region where
     f (Zeta n r) = (-r) |*| n
 
--- Some points that are on the boundary of the intersections containg current region
--- that are closer to the target than the origin
--- These points can be used to estimate the correct values
-boundary_points_restricted ::  (RealVec (Vec n R), SingI n) => Region n -> Vec n R -> Vec n R -> [Vec n R]
-boundary_points_restricted region x0 x1 = filter (\v -> norm (v|-|x1) < norm (x0|-|x1)) (boundary_points region)
-
 
 -- You had best ensure that these two are the same size before executing this function
 velocity_region_map :: [Region n] -> [VSet n] -> [VelocityRegion n]
 velocity_region_map h s = M <$> zip h s 
 
-dfs_end :: (RealVec (Vec n R), SingI n) => [([Vec n R], Region n, [Region n])] -> [(Vec n R, VSet n)]
+get_velocity_set :: Region n -> [VelocityRegion n] -> Maybe (VSet n)
+get_velocity_set _ [] = Nothing
+get_velocity_set region (M (region_i, set_i) : next)
+    | region == region_i = Just set_i 
+    | otherwise = get_velocity_set region next
+
+
+dfs_end :: (RealVec (Vec n R), SingI n) => [VelocityRegion n] -> [(Region n, [(Region n, Vec n R)])] -> [(Vec n R, VSet n)]
+dfs_end _ [] = []
+dfs_end vsregion ((current_region, adj_interfaces) : node_tail) = case maybeVal of 
+    Nothing -> []
+    Just vset -> (zip vectors (replicate (length vectors) vset)) ++ (dfs_end vsregion node_tail)
+    where    
+        maybeVal = get_velocity_set current_region vsregion
+        (_, vectors) = unzip adj_interfaces
+    
+    
 
 
 test_space_x :: HalfSpace (Lit 2)
@@ -220,6 +239,6 @@ test_G2 = [[test_g2]]
 
 test_start :: Region (Lit 2)
 test_end :: Region (Lit 2)
-test_graph :: [([Vec (Lit 2) R], Region (Lit 2), [Region (Lit 2)])]
+test_graph :: [(Region (Lit 2), [(Region (Lit 2), Vec (Lit 2) R)])]
 (test_start, test_end, test_graph) = elvis_graph test_quadrants test_x0 test_x1
 
