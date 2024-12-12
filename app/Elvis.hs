@@ -36,12 +36,9 @@ import ConvexSet
 import Region
 import RealMatrix
 
-import qualified Data.HashSet as HashSet
 import Data.Singletons
 import Proj (precision_)
 import Data.Foldable
-
-type VelocityRegion m n = (Vec m (Region n), Vec m (VSet n))
 
 -- Cost function associated with moving in a velocity set towards a point (vector valued function of two inputs)
 cost_function_single :: (RealVec (Vec n R), CSet n) => VSet n -> Vec n R ->  Vec n R -> R
@@ -97,55 +94,19 @@ get_adjacents region x0 x1 = filter (\(_, v) -> norm (v|-|x1) < norm (x0|-|x1)) 
 -- Creates a graph for the use of a graph given a list of regions and a start and end vector,
 -- this returns the start region, the end region, and the associated graph
 
--- I don't think we need [Region n] given now the [Vec n R] but lets not be hasty
-elvis_graph :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Vec n R ->  (Region n, Region n, [(Region n, [(Region n, Vec n R)])])
-elvis_graph regions x0 x1 = (start_region, end_region, graph) where
-    (_, graph) = construct_alist_ visited (x0, x1) start_region
-    start_region = region_from_points regions x0
-    end_region = region_from_points regions x1
-    visited = HashSet.empty 
-
 -- Internal adjacency list creator
-construct_alist_ :: (SingI n) => HashSet.HashSet (Region n) -> (Vec n R, Vec n R) -> Region n -> (HashSet.HashSet (Region n), [(Region n, [(Region n, Vec n R)])])
-construct_alist_ vs (x0, x1) start
-    | HashSet.member start vs = (vs, [])
-    | otherwise = (vss, [(start, interfaces)] ++ sublist) where
-    sublist = foldr (++) [] graphlist
-    vss = HashSet.unions (setlist ++ [v])
-    v = HashSet.insert start vs
-    interfaces = get_adjacents start x0 x1
-    (adj, _) = unzip interfaces
-    (setlist, graphlist) = unzip ((construct_alist_ v (x0, x1)) <$> adj)
+
 
 -- You had best ensure that these two are the same size before executing this function
-velocity_region_map :: [(Region n)] -> [(VSet n)] -> Maybe (VelocityRegion m n)
-velocity_region_map h s = 
 
-get_velocity_set_ :: Sing m -> Region n -> VelocityRegion m n -> Maybe (VSet n)
-get_velocity_set_ = \case
-    SZ -> \_ -> \_ -> Nothing
-    SS l -> \region -> \(this_region:#rtail, this_set:#stail) -> 
-        if region == this_region then Just this_set
-        else get_velocity_set_ l region (rtail, stail)
-
-get_velocity_set :: (SingI m) => Region n -> VelocityRegion m n -> Maybe (VSet n)
-get_velocity_set region regions = get_velocity_set_ sing region regions    
-
--- get_velocity_set_ _ Nil = Nothing
--- get_velocity_set_ region ((region_i, set_i) : next)
---     | region == region_i = Just set_i 
---     | otherwise = get_velocity_set region next
-
-
-dfs_end :: (RealVec (Vec n R), SingI n, RealMat (Matrix m n)) => VelocityRegion m n -> [(Region n, [(Region n, Vec n R)])] -> (Matrix m n, [VSet n])
-
-dfs_end vsregion ((current_region, adj_interfaces) : node_tail) = case maybeVal of 
-    Nothing -> []
-    Just vset -> (zip vectors (replicate (length vectors) vset)) ++ (dfs_end vsregion node_tail)
-    where    
-        maybeVal = get_velocity_set current_region vsregion
-        (_, vectors) = unzip adj_interfaces
     
+
+  
+
+
+
+--dfs_wrapper regions unsafe_graph = 
+
 
 test_space_x :: HalfSpace (Lit 2)
 test_space_x = Zeta (0:#1:#Nil) 0
@@ -176,8 +137,5 @@ test_g2 v = (index (dim 1) v)^(2::Integer) + (((index (dim 1) v) + 1)^(2::Intege
 test_G2 :: VSet (Lit 2)
 test_G2 = [[test_g2]]
 
-test_start :: Region (Lit 2)
-test_end :: Region (Lit 2)
-test_graph :: [(Region (Lit 2), [(Region (Lit 2), Vec (Lit 2) R)])]
-(test_start, test_end, test_graph) = elvis_graph test_quadrants test_x0 test_x1
+
 

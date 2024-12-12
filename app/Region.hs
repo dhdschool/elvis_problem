@@ -31,11 +31,15 @@ module Region where
 
 import FixedVector
 import RealVector
+import ConvexSet
 import Data.Hashable
 import Data.Singletons
 import Data.List (permutations)
 import Data.Kind (Type)
+import qualified Data.HashMap.Strict as HashMap
 
+
+type VelocityRegions n = HashMap.HashMap (Region n) (VSet n)
 
 -- Halfspace defined by normal vector and dot product threshold r
 data HalfSpace :: Nat -> Type where
@@ -111,12 +115,13 @@ get_adjacent_region (h:hs) = zip (([adj_region] ++ hs) : ((h:) <$> (tail_region)
 -- There's definitely a faster way to implement this than search (from O(n) -> O(1))
 -- This searches all regions in a given list and returns the region that contains the points, with an empty
 -- list if no regions contain the point
-region_from_points :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Region n
-region_from_points [] _ = []
-region_from_points (r:rs) x
-    | in_region r x = r  
-    | otherwise = region_from_points rs x
 
+-- region_from_points :: (RealVec (Vec n R), SingI n) => VelocityRegions n -> Vec n R -> Region n
+-- region_from_points rmap x
+--     | in_region r x = r  
+--     | otherwise = region_from_points rs x where
+--         (r:rs) = HashMap.keys rmap
+-- region_from_points _ _ = []
 
 -- Takes in a region in R^n and returns points on the interface of 
 -- of the neighbouring regions of said region

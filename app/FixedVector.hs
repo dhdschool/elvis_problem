@@ -170,15 +170,21 @@ generate_ = \case
 generate :: SingI n => (Fin n -> a) -> Vec n a
 generate = generate_ sing
 
-fromList_ :: Sing n -> [a] -> Maybe (Vec n a)
-fromList_ = \case
+
+-- Use these functions with care, they aren't guaranteed to return you a vector because a list may be of any size
+-- whereas a particular vector may be of only one size
+
+-- Return a vector of a given size if given a list of that size, otherwise return Nothing
+fromListExplicit :: Sing n -> [a] -> Maybe (Vec n a)
+fromListExplicit = \case
     SZ -> \case
         [] -> Just Nil
         _ -> Nothing
 
     SS l -> \case
         [] -> Nothing
-        (x:xs) -> (x:#) <$> (fromList_ l xs)
+        (x:xs) -> (x:#) <$> (fromListExplicit l xs)
 
+-- Returns a vector of implicit size if a given list is of that size, otherwise return Nothing
 fromList :: (SingI n) => [a] -> Maybe (Vec n a)
-fromList x = fromList_ sing x
+fromList x = fromListExplicit sing x
