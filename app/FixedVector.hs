@@ -23,6 +23,7 @@
 {-# LANGUAGE UndecidableInstances#-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveFoldable #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 -- An arrow with both direction and magnitude
 
@@ -33,7 +34,7 @@ import           Data.Kind
 import           Data.Singletons
 import           Data.Singletons.TH
 import           Data.Singletons.Base.TH
-import Data.Number.BigFloat
+
 
 
 -- This is template haskell, the official haskell metaprogramming language
@@ -109,13 +110,15 @@ zipVec = \case
     x:#xs -> \case
         y:#ys -> (x, y) :# zipVec xs ys
 
--- Defining addition and subtraction on the type level for successor nats
+--Defining addition and subtraction on the type level for successor nats
 type family (n::Nat) + (m::Nat) :: Nat where
     'Z + m = m
     'S n + m = 'S (n+m)
 
 type family (n::Nat) - (m::Nat) :: Nat where
     'S n - m = 'S(n-m)
+
+
 
 -- Vector append operation
 (|++|) :: Vec n a -> Vec m a -> Vec (n+m) a
@@ -130,6 +133,21 @@ index = \case
         x:#_ -> x
     FS i -> \case
         _ :# xs -> index i xs
+
+getFirst :: Vec (S n) a -> a
+getFirst = \case
+    (x:#_) -> x
+
+getLast :: Vec (S n) a -> a
+getLast = \case
+    (x:#Nil) -> x
+    (_:#xs) -> getLast_ xs
+
+getLast_ :: (Vec n a -> a)
+getLast_ = \case 
+    (x:#Nil) -> x
+    (_:#xs) -> getLast_ xs
+
 
 -- Generating a vector of size n where every value is a given scalar
 vecreplicate_ :: Sing n -> a -> Vec n a
@@ -152,42 +170,21 @@ generate_ = \case
 generate :: SingI n => (Fin n -> a) -> Vec n a
 generate = generate_ sing
 
--- A type alias for the real numbers, this defines them as float with 10 decimal places of precision
-type R = BigFloat Prec10
 
-precision :: Integer
-precision = 8
+-- Use these functions with care, they aren't guaranteed to return you a vector because a list may be of any size
+-- whereas a particular vector may be of only one size
 
--- A zero vector of size n
-zeroVecs_ :: Sing n -> Vec n R
-zeroVecs_ = \case
-    SZ -> Nil
-    SS l -> 0:# zeroVecs_ l
+-- Return a vector of a given size if given a list of that size, otherwise return Nothing
+fromListExplicit :: Sing n -> [a] -> Maybe (Vec n a)
+fromListExplicit = \case
+    SZ -> \case
+        [] -> Just Nil
+        _ -> Nothing
 
--- A zero vector that has an implicit size of n using haskell's powerfull type system
--- For example, if you had (3:#2:#Nil) + zeroVecs, you would not have to define the size of
--- zeroVecs because addition is only defined between vectors of the same size,
--- so Haskell assumes that the size of the zeroVec is 2
+    SS l -> \case
+        [] -> Nothing
+        (x:xs) -> (x:#) <$> (fromListExplicit l xs)
 
-zeroVecs :: (SingI n) => Vec n R
-zeroVecs = zeroVecs_ sing
-
---Identity matrix of size n x n
-baseVecs_ :: Sing n -> Vec n (Vec n R)
-baseVecs_ = \case
-    SZ -> Nil
-    SS l -> (1 :# zeroVecs_ l) :# ((0 :#) <$> baseVecs_ l)
-
---Identity square matrix of implicit size
-baseVecs :: (SingI n) => Vec n (Vec n R)
-baseVecs = baseVecs_ sing
-
--- Negative identity matrix of size n x n
-negativeVecs_ :: Sing n -> Vec n (Vec n R)
-negativeVecs_ = \case
-    SZ -> Nil
-    SS l -> (-1 :# zeroVecs_ l) :# ((0 :#) <$> negativeVecs_ l)
-
---Negative identity square matrix of implicit size
-negativeVecs :: (SingI n) => Vec n (Vec n R)
-negativeVecs = negativeVecs_ sing
+-- Returns a vector of implicit size if a given list is of that size, otherwise return Nothing
+fromList :: (SingI n) => [a] -> Maybe (Vec n a)
+fromList x = fromListExplicit sing x

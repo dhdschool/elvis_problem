@@ -34,6 +34,9 @@ import Data.Singletons
 
 
 -- Estimations can be sped up by saving gradients in the numerical approximations below as opposed to redudently calculating them
+-- One method to do this is transitioning the psuedo gradient descent for single approximations into a
+-- full matrix valued gradient descent for multiple constraints at once (this should improve speed massively)
+
 
 precision_ :: R
 precision_ = 25
