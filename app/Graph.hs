@@ -30,6 +30,7 @@ module Graph where
 
 import FixedVector
 import RealVector
+import RealMatrix
 import ConvexSet
 import Region
 import Elvis
@@ -52,23 +53,44 @@ construct_graph_ graph (x0, x1) start
     interfaces = get_adjacents start x0 x1
     (adjacent_regions, _) = unzip interfaces
 
--- construct_graph :: (SingI n) => VelocityRegions n -> Vec n R -> Vec n R -> Graph n
--- construct_graph regions x0 x1 = construct_graph_ HashMap.empty (x0, x1) (region_from_points regions x0)
+construct_graph :: (SingI n) => VelocityRegions n -> Vec n R -> Vec n R -> Graph n
+construct_graph regions x0 x1 = construct_graph_ HashMap.empty (x0, x1) (region_from_points regions x0)
 
 get_velocity_set :: (SingI n) => Region n -> VelocityRegions n -> Maybe (VSet n)
 get_velocity_set region rmap = HashMap.lookup region rmap
 
 
-search_graph_ :: (SingI n) => Region n -> Graph n -> (Maybe (Node n))
-search_graph_ search graph = HashMap.lookup search graph
+search_graph :: (SingI n) => Region n -> Graph n -> (Maybe (Node n))
+search_graph search graph = HashMap.lookup search graph
+
+get_all_paths_ :: (SingI n) => Node n -> VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n)]]
+get_all_paths_ [] _ _ _ _ = Just []
+
+-- get_all_paths_ ((next_region, interface_vector):interface_tail) regions current_region end_region graph 
+--     | current_region == end_region = case (get_velocity_set current_region regions) of
+--         Nothing -> Nothing
+--         Just vset -> Just [[(interface_vector, vset)]] 
+--     | otherwise = case (get_velocity_set current_region regions) of
+--         Nothing -> Nothing
+--         Just vset -> case (maybe_depth, maybe_width) of
+--             (Just depth, Just width) -> Just (( (((interface_vector, vset):)<$>) <$> depth) : (width))
+--             (_, _) -> Nothing
+
+--     where 
+--         maybe_depth = get_all_paths_ (search_graph next_region graph) regions next_region end_region graph
+--         maybe_width = get_all_paths_ interface_tail regions current_region end_region graph
 
 
--- dfs :: Region n -> VelocityRegions m n -> [(Region n, (Vec m (Region n, Vec n R)))] -> [(Matrix m n, Vec m (VSet n))]
 
--- dfs start_region regions ((this_region, (path0_region, path0_vec) :# other_paths) : vectail)
---     | maybe_vset == Nothing = []  
---     where
---     maybe_vset = get_velocity_set this_region
 
---dfs_wrapper :: [VelocityRegion m n] -> [Region n, [(Region n, Vec n R)]] -> Maybe [(Matrix m n, Vec m (VSet n))]
+get_all_paths :: (SingI n) => VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n)]]
+get_all_paths regions start_region end_region graph = case maybe_vset of
+    Nothing -> Nothing
+    Just node ->  get_all_paths_ node regions start_region end_region graph
+    where
+        maybe_vset = (search_graph start_region graph) 
+
+
+
+
 

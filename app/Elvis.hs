@@ -47,23 +47,21 @@ cost_function_single g x y = norm (y |-| x) / norm (proj g (y |-| x))
 -- Generalized cost function of the cost function above (matrix valued function)
 -- This function assumes that the VSet list is the same size as your matrix without checking (for silly reasons)
 -- If this is not ensured, you will recieve errors as this function implements partial (unsafe) functions
-cost_function :: (RealVec (Vec n R), RealMat (Matrix (S m) n), CSet n) =>  Vec n R -> Vec n R -> [VSet n] -> Matrix (S m) n -> R
+cost_function :: (RealVec (Vec n R), RealMat (Matrix (S m) n), CSet n, SingI m, Applicative (Vec m)) =>
+  Vec n R -> Vec n R -> Vec (S (S m)) (VSet n) -> Matrix (S m) n -> R
 cost_function x0 x1 g m = cost_function_single g0 x0 y0 + mat_cost + cost_function_single gf x1 yf where
     y0 = getFirst m
     yf = getLast m
-    g0 = head g
-    gf = last g
-    gs = reverseTail (tail g)
-    lst = toList m
-    differences = pairs (|-|) lst
+    g0 = getFirst g
+    gf = getLast g
+    gs = reverseTail (vecTail g)
+    
+    differences = vecPairs (|-|) m
     velocity = norm <$> ((proj <$> gs) <*> differences)
     dist = norm <$> differences
     mat_cost = sum $ liftA2 (/) dist velocity
 
 
-reverseTail :: [a] -> [a]
-reverseTail (_:[]) = []
-reverseTail (v:vs) = [v] ++ (reverseTail vs)
 
 --Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
 -- exponential/binary search)
@@ -91,21 +89,7 @@ elvis_single g0 x0 g1 x1 h= gradient_descent cost y where
 get_adjacents :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
 get_adjacents region x0 x1 = filter (\(_, v) -> norm (v|-|x1) < norm (x0|-|x1)) (get_adjacent_region region)
 
--- Creates a graph for the use of a graph given a list of regions and a start and end vector,
--- this returns the start region, the end region, and the associated graph
 
--- Internal adjacency list creator
-
-
--- You had best ensure that these two are the same size before executing this function
-
-    
-
-  
-
-
-
---dfs_wrapper regions unsafe_graph = 
 
 
 test_space_x :: HalfSpace (Lit 2)

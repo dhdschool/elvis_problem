@@ -148,6 +148,21 @@ getLast_ = \case
     (x:#Nil) -> x
     (_:#xs) -> getLast_ xs
 
+vecTail :: (SingI (S n)) => Vec (S n) a -> Vec n a
+vecTail x = vecTail_ sing x
+
+vecTail_ :: Sing (S n) -> Vec (S n) a -> Vec n a
+vecTail_ = \case
+    SS SZ -> \_ -> Nil
+    SS (SS l) -> \(x:#xs) -> x :# (vecTail_ (SS l) xs)
+
+reverseTail_ :: Sing (S n) -> Vec (S n) a -> Vec n a
+reverseTail_ = \case
+    SS SZ -> \(_:#Nil) -> Nil
+    SS (SS l) -> \(x:#xs) -> x :# (reverseTail_ (SS l) xs)
+
+reverseTail :: (SingI (S n)) => Vec (S n) a -> Vec n a
+reverseTail x = reverseTail_ sing x 
 
 -- Generating a vector of size n where every value is a given scalar
 vecreplicate_ :: Sing n -> a -> Vec n a
@@ -188,3 +203,11 @@ fromListExplicit = \case
 -- Returns a vector of implicit size if a given list is of that size, otherwise return Nothing
 fromList :: (SingI n) => [a] -> Maybe (Vec n a)
 fromList x = fromListExplicit sing x
+
+vecPairs_ :: Sing (S n) -> (a -> a -> a) -> Vec (S n) a -> Vec n a
+vecPairs_ = \case
+    SS SZ -> \_ -> \_ -> Nil
+    SS (SS l) -> \f -> \(x:#(x2:#xs)) -> (f x2 x) :# vecPairs_ (SS l) f (x2:#xs)
+ 
+vecPairs :: (SingI (S n)) => (a -> a -> a) -> (Vec (S n) a) -> Vec n a
+vecPairs f x = vecPairs_ sing f x 

@@ -52,7 +52,9 @@ which will make a new folder in your user directory and clone this GitHub reposi
 To install the libraries that this project depends on, run the command ```cabal build``` once in the directory of the repository (**ideally** /home/{username}/elvis_problem or some variant). After this is run, your installation is complete
 
 # Usage
-I have not yet decided what end-user usage for this project will look like. Currently, my method for using these methods is to run ```cabal repl```, which opens a "read-eval-print-loop" for Haskell. Once inside, any functions contained in the app folder files can be run. To exit the REPL, type ":q". An example of what this may be used for can look as follows
+When this project is complete, will have main contain many functions that I deem suitably useful for creating constraints for various Elvis problems, but for now we have only the conglamerate of functions contained within the various files in the ```app/``` folder.
+
+Currently, the way I run this involves entering ```cabal repl``` into the terminal, which opens a "read-eval-print-loop" for Haskell. Once inside, any functions contained in the app folder files can be run after being imported (typically by entering the command ```import {filename}```) once in ghci. To exit the REPL, type ":q". An example of what this may be used for can look as follows
 
 ```
 ghci> test_v
@@ -109,7 +111,25 @@ This class is then instantiated for all vectors of object type R and of dimensio
 
 Similarly, there are some operations we would like to have defined on Convex sets. Note that **this program does not check whether or not a function produces a convex set at compile time** (such a program would require extreme use of meta-programming and dependent types at a level that I am not proficient with, and most likely would tank performance), therefore it is up to the user to ensure that all inputs are proper. The operations that are defined however, are set intersection, projection of a real vector onto a set, the corresponding distance of the projection, the minkowski sum, and whether or not a vector is contained within the set. The data type that is instantiated is VSet (short for vector set), which is simply a syntatic equivalent for a vector of dimension m that contains some minkowski sum of a list of vector valued functions that map from R^n -> R. This instantiation is valid for all natural numbers n and m.
 
-### The Proj file
-Proj.hs is an internal file that uses numerical methods to approximate the projection. When this project is finished, the users ability to access Proj.hs will be removed (as it is an internal tool), so if one wishes to access those function from ghci at that time, run the command ```:l app/Proj.hs``` to load those functions into the ghci namespace.
+### Real Matrices
+
+The cost function for the elvis problem is a corralary to time, and is time if $R^n$ is distance and $S_i$ are velocity sets. This makes it a nonlinear function with multiple vector inputs (however these vectors are of the same length). This makes our cost function a matrix-valued function mapping from $R^{m x n} \rightarrow R$. This function is still convex, however, and my solution employs gradient descent of a matrix-valued function (which converges quickly because we know we are guaranteed a solution). The RealMatrix file contains some functions that are useful for this, most notably the matrix type synonym, matrix directional derivatives, the matrix gradient, and the identity tensor (in $R^{(m x n) x (m x n)}$). 
+
+### Regions
+
+I define a region as some intersection of halfspaces in $R^n$, which is represented by a list. The functions in the Region file provide the necessary framework to work with Regions, but hopefully the end-user should not have to deal with Regions heavily. 
+
+### Proj
+The projection file provides some early approximation work for estimating the projection of a vector onto a convex set using numerical methods. This file can certainly be optimized, but is in working order. Similarly to the Regions file, the end user should not have to access this file for any methods, opting instead for the projection methods in ConvexSet which implement this file.
+
+### Graph
+
+The graph file contains necessary functions for making graphs of all possible intersections of interfaces towards x1 for the elvis problem. This is used in the Elvis file to check the cost function against every possible valid intersection to find the global minimum. 
+
+### Elvis
+
+This file contains the cost function and some helpful wrapper functions for solving the elvis problem. It is currently unfinished.
+
+
 
 </div>
