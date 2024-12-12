@@ -116,12 +116,16 @@ get_adjacent_region (h:hs) = zip (([adj_region] ++ hs) : ((h:) <$> (tail_region)
 -- This searches all regions in a given list and returns the region that contains the points, with an empty
 -- list if no regions contain the point
 
--- region_from_points :: (RealVec (Vec n R), SingI n) => VelocityRegions n -> Vec n R -> Region n
--- region_from_points rmap x
---     | in_region r x = r  
---     | otherwise = region_from_points rs x where
---         (r:rs) = HashMap.keys rmap
--- region_from_points _ _ = []
+region_from_points_ :: (RealVec (Vec n R), SingI n) => [Region n] -> Vec n R -> Region n
+region_from_points_ (r:rs) x
+    | in_region r x = r  
+    | otherwise = region_from_points_ rs x
+region_from_points_ _ _ = []
+
+region_from_points :: (RealVec (Vec n R), SingI n) => VelocityRegions n -> Vec n R -> Region n 
+region_from_points rmap x = region_from_points_ (HashMap.keys rmap) x
+
+
 
 -- Takes in a region in R^n and returns points on the interface of 
 -- of the neighbouring regions of said region

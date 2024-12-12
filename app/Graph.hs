@@ -37,7 +37,6 @@ import Elvis
 import qualified Data.HashMap.Strict as HashMap
 
 import Data.Singletons
-import Data.Hashable 
 
 
 type Interface n = (Region n, Vec n R)
