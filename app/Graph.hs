@@ -64,21 +64,25 @@ search_graph :: (SingI n) => Region n -> Graph n -> (Maybe (Node n))
 search_graph search graph = HashMap.lookup search graph
 
 get_all_paths_ :: (SingI n) => Node n -> VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n)]]
-get_all_paths_ [] _ _ _ _ = Just []
+get_all_paths_ [] _ _ _ _ = Just [[]]
 
--- get_all_paths_ ((next_region, interface_vector):interface_tail) regions current_region end_region graph 
---     | current_region == end_region = case (get_velocity_set current_region regions) of
---         Nothing -> Nothing
---         Just vset -> Just [[(interface_vector, vset)]] 
---     | otherwise = case (get_velocity_set current_region regions) of
---         Nothing -> Nothing
---         Just vset -> case (maybe_depth, maybe_width) of
---             (Just depth, Just width) -> Just (( (((interface_vector, vset):)<$>) <$> depth) : (width))
---             (_, _) -> Nothing
+get_all_paths_ ((next_region, interface_vector):interface_tail) regions current_region end_region graph 
+    | current_region == end_region = case (get_velocity_set current_region regions) of
+        Nothing -> Nothing
+        Just vset -> Just [[(interface_vector, vset)]] 
+    | otherwise = case (get_velocity_set current_region regions) of
+        Nothing -> Nothing
+        Just vset -> case (maybe_depth, maybe_width) of
+            (Just depth, Just width) -> Just (((node:) <$> depth) ++ (width)) where
+                node = (interface_vector, vset)
+            (_, _) -> Nothing where 
 
---     where 
---         maybe_depth = get_all_paths_ (search_graph next_region graph) regions next_region end_region graph
---         maybe_width = get_all_paths_ interface_tail regions current_region end_region graph
+    where 
+        maybe_depth = case maybe_node of
+            Nothing -> Nothing
+            Just node_val -> get_all_paths_ node_val regions next_region end_region graph
+        maybe_width = get_all_paths_ interface_tail regions current_region end_region graph
+        maybe_node = (search_graph next_region graph)
 
 
 
