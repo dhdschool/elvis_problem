@@ -98,7 +98,9 @@ get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) (-r), (get_interface (Zet
 -- Generates regions from a given set of halfspaces (without duals) that creates regions spanning R^n
 -- for example, if you had two halfspaces this would return you the four regions created by their intersections
 generate_Rn :: (SingI n) => [HalfSpace n] -> [Region n]
-generate_Rn hs = (hs ++ (get_dual <$> hs))
+generate_Rn [] = []
+generate_Rn (h:hs) = ([h]: rs) ++ ([get_dual h]: rs) where
+    rs = (generate_Rn hs)
 
 -- Gets the interfaces that border a given region and a vector on that interface
 get_boundaries :: (SingI n) => Region n -> [Region n]
