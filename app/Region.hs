@@ -86,9 +86,13 @@ whole_space h = [h, get_dual h]
 get_dual :: (SingI n) => HalfSpace n -> HalfSpace n
 get_dual (Zeta n r) = Zeta (zeroVecs |-| n) r
 
+get_interface :: HalfSpace n -> Vec n R
+get_interface (Zeta n r) = (r * (pnorm 1 n_normal)) |*| n_normal where
+    n_normal = unit n
+
 -- Returns the counterpart of a given halfspace and a vector thats guaranteed to be on the intersection between halfspaces
 get_dual_interface :: (SingI n) => HalfSpace n -> (HalfSpace n, Vec n R)
-get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) r, (-r) |*| n)
+get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) r, (get_interface (Zeta n r)))
 
 -- Returns the regions in space created by the intersection of a list of halfspaces
 get_regions :: [HalfSpace n] -> [Region n]
@@ -124,13 +128,3 @@ region_from_points_ _ _ = []
 
 region_from_points :: (RealVec (Vec n R), SingI n) => VelocityRegions n -> Vec n R -> Region n 
 region_from_points rmap x = region_from_points_ (HashMap.keys rmap) x
-
-
-
--- Takes in a region in R^n and returns points on the interface of 
--- of the neighbouring regions of said region
-boundary_points :: (RealVec (Vec n R), SingI n) => Region n -> [Vec n R]
-boundary_points region = f <$> region where
-    f (Zeta n r) = (-r) |*| n
-
-

@@ -110,6 +110,20 @@ zipVec = \case
     x:#xs -> \case
         y:#ys -> (x, y) :# zipVec xs ys
 
+-- Takes a vector where each element is a pair and returns two vectors
+unzipVec :: Vec n (a, b) -> (Vec n a, Vec n b)
+unzipVec = \case
+    Nil -> (Nil, Nil)
+    ((a, b):#vs) -> ((a:#as), (b:#bs)) where
+        (as, bs) = unzipVec vs
+
+unzipVec3 :: Vec n (a, b, c) -> (Vec n a, Vec n b, Vec n c)
+unzipVec3 = \case
+    Nil -> (Nil, Nil, Nil)
+    ((a, b, c):#vs) -> ((a:#as), (b:#bs), (c:#cs)) where
+        (as, bs, cs) = unzipVec3 vs
+
+
 --Defining addition and subtraction on the type level for successor nats
 type family (n::Nat) + (m::Nat) :: Nat where
     'Z + m = m

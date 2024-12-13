@@ -38,20 +38,25 @@ import RealMatrix
 
 import Data.Singletons
 import Proj (precision_)
-import Data.Foldable
+
+error_punish :: R
+error_punish = 10
 
 -- Cost function associated with moving in a velocity set towards a point (vector valued function of two inputs)
-cost_function_single :: (RealVec (Vec n R), CSet n) => VSet n -> Vec n R ->  Vec n R -> R
-cost_function_single g x y = norm (y |-| x) / norm (proj g (y |-| x))
+cost_function_single :: (RealVec (Vec n R), CSet n) => Region n -> VSet n -> Vec n R ->  Vec n R -> R
+cost_function_single sigma g start end = (norm (end |-| start) / norm (proj g (end |-| start))) + (indicator_function error_punish sigma end) 
 
 -- Generalized cost function of the cost function above (matrix valued function)
--- This function assumes that the VSet list is the same size as your matrix without checking (for silly reasons)
--- If this is not ensured, you will recieve errors as this function implements partial (unsafe) functions
 cost_function :: (RealVec (Vec n R), RealMat (Matrix (S m) n), CSet n, SingI m, Applicative (Vec m)) =>
-  Vec n R -> Vec n R -> Vec (S (S m)) (VSet n) -> Matrix (S m) n -> R
-cost_function x0 x1 g m = cost_function_single g0 x0 y0 + mat_cost + cost_function_single gf x1 yf where
+  Vec n R -> Vec n R -> Vec (S (S m)) (Region n) -> Vec (S (S m)) (VSet n) -> Matrix (S m) n -> R
+cost_function x0 x1 sigma g m = cost_function_single sigma0 g0 x0 y0 + mat_cost + cost_function_single sigmaf gf yf x1 where
     y0 = getFirst m
     yf = getLast m
+
+    sigma0 = getFirst sigma
+    sigmaf = [Zeta x1 ((norm x1) ** 2)]
+    sigmas = reverseTail (vecTail sigma)
+
     g0 = getFirst g
     gf = getLast g
     gs = reverseTail (vecTail g)
@@ -59,9 +64,12 @@ cost_function x0 x1 g m = cost_function_single g0 x0 y0 + mat_cost + cost_functi
     differences = vecPairs (|-|) m
     velocity = norm <$> ((proj <$> gs) <*> differences)
     dist = norm <$> differences
-    mat_cost = sum $ liftA2 (/) dist velocity
+    mat_cost = (sum $ liftA2 (/) dist velocity) + errors
+    errors = sum (((indicator_function error_punish) <$> sigmas) <*> differences)
 
-
+indicator_function :: (RealVec (Vec n R)) => R -> Region n -> Vec n R -> R
+indicator_function cost region x = cost * min_dist where
+    min_dist = minimum (abs <$> (( (from_halfspace) <$> region) <*> pure x))
 
 --Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
 -- exponential/binary search)
@@ -81,14 +89,24 @@ gradient_descent cost y0 = gradient_descent_ 0 cost (grad cost) y0 1
 
 -- Solves the elvis problem with a single interface and two constraint sets, where x0 is on the side of the interface
 -- associated with g0, and x1 is on the side associated with g1
-elvis_single :: (RealVec (Vec n R), CSet n, CSet n) => VSet n ->  Vec n R -> VSet n -> Vec n R -> HalfSpace n -> Vec n R
-elvis_single g0 x0 g1 x1 h= gradient_descent cost y where
-    y = interface_intersect x0 x1 h
-    cost v = (cost_function_single g0 x0 v) + (cost_function_single g1 v x1)
+elvis_single :: (RealVec (Vec n R), CSet n) => VSet n ->  Vec n R -> VSet n -> Vec n R -> HalfSpace n -> Vec n R
+elvis_single g0 x0 g1 x1 h = gradient_descent cost y where
+    y = get_interface h
+    cost v = (cost_function_single [h] g0 x0 v) + (cost_function_single [Zeta x1 ((norm x1) ** 2)] g1 v x1)
+
 
 get_adjacents :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
 get_adjacents region x0 x1 = filter (\(_, v) -> norm (v|-|x1) < norm (x0|-|x1)) (get_adjacent_region region)
 
+
+to_matrix_and_constraints :: (SingI (S m)) => [(Vec n R, VSet n, Region n)] -> Maybe (Matrix m n, Vec (S m) (VSet n), Vec (S m) (Region n))
+to_matrix_and_constraints lst = case (maybe_val) of
+    (Just val) -> Just (interfaces, sets, regions) where
+        (vecs, sets, regions) = unzipVec3 val
+        interfaces = reverseTail vecs
+    Nothing -> Nothing
+    where
+        maybe_val = fromList lst
 
 
 

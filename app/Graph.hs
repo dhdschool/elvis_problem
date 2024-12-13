@@ -30,7 +30,6 @@ module Graph where
 
 import FixedVector
 import RealVector
-import RealMatrix
 import ConvexSet
 import Region
 import Elvis
@@ -63,20 +62,21 @@ get_velocity_set region rmap = HashMap.lookup region rmap
 search_graph :: (SingI n) => Region n -> Graph n -> (Maybe (Node n))
 search_graph search graph = HashMap.lookup search graph
 
-get_all_paths_ :: (SingI n) => Node n -> VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n)]]
+get_all_paths_ :: (SingI n) => Node n -> VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n, Region n)]]
 get_all_paths_ [] _ _ _ _ = Just [[]]
 
 get_all_paths_ ((next_region, interface_vector):interface_tail) regions current_region end_region graph 
-    | current_region == end_region = case (get_velocity_set current_region regions) of
+    | next_region == end_region = case (get_velocity_set next_region regions) of
         Nothing -> Nothing
-        Just vset -> Just [[(interface_vector, vset)]] 
+        Just vset -> case (maybe_width) of 
+            Nothing -> Nothing
+            Just width -> Just ([[(interface_vector, vset, next_region)]] ++ width)
     | otherwise = case (get_velocity_set current_region regions) of
         Nothing -> Nothing
         Just vset -> case (maybe_depth, maybe_width) of
             (Just depth, Just width) -> Just (((node:) <$> depth) ++ (width)) where
-                node = (interface_vector, vset)
-            (_, _) -> Nothing where 
-
+                node = (interface_vector, vset, current_region)
+            (_, _) -> Nothing
     where 
         maybe_depth = case maybe_node of
             Nothing -> Nothing
@@ -85,9 +85,7 @@ get_all_paths_ ((next_region, interface_vector):interface_tail) regions current_
         maybe_node = (search_graph next_region graph)
 
 
-
-
-get_all_paths :: (SingI n) => VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n)]]
+get_all_paths :: (SingI n) => VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n, Region n)]]
 get_all_paths regions start_region end_region graph = case maybe_vset of
     Nothing -> Nothing
     Just node ->  get_all_paths_ node regions start_region end_region graph

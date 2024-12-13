@@ -71,6 +71,7 @@ executable Elvis-Problem
         Region
         Graph
 
+
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
