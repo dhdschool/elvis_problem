@@ -84,7 +84,7 @@ whole_space h = [h, get_dual h]
 
 -- Returns the counterpart of a given halfspace
 get_dual :: (SingI n) => HalfSpace n -> HalfSpace n
-get_dual (Zeta n r) = Zeta (zeroVecs |-| n) r
+get_dual (Zeta n r) = Zeta (zeroVecs |-| n) (-r)
 
 get_interface :: HalfSpace n -> Vec n R
 get_interface (Zeta n r) = (r * (pnorm 1 n_normal)) |*| n_normal where
@@ -92,16 +92,13 @@ get_interface (Zeta n r) = (r * (pnorm 1 n_normal)) |*| n_normal where
 
 -- Returns the counterpart of a given halfspace and a vector thats guaranteed to be on the intersection between halfspaces
 get_dual_interface :: (SingI n) => HalfSpace n -> (HalfSpace n, Vec n R)
-get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) r, (get_interface (Zeta n r)))
+get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) (-r), (get_interface (Zeta n r)))
 
--- Returns the regions in space created by the intersection of a list of halfspaces
-get_regions :: [HalfSpace n] -> [Region n]
-get_regions hs = permutations hs
 
 -- Generates regions from a given set of halfspaces (without duals) that creates regions spanning R^n
 -- for example, if you had two halfspaces this would return you the four regions created by their intersections
 generate_Rn :: (SingI n) => [HalfSpace n] -> [Region n]
-generate_Rn hs = get_regions (hs ++ (get_dual <$> hs))
+generate_Rn hs = (hs ++ (get_dual <$> hs))
 
 -- Gets the interfaces that border a given region and a vector on that interface
 get_boundaries :: (SingI n) => Region n -> [Region n]
