@@ -45,6 +45,9 @@ type VelocityRegions n = HashMap.HashMap (Region n) (VSet n)
 data HalfSpace :: Nat -> Type where
     Zeta :: (RealVec (Vec n R)) => Vec n R -> R -> HalfSpace n
 
+instance Show (HalfSpace n) where
+    show (Zeta n r) = "Halfspace: r=" ++ show r ++ ", n=" ++ show n
+
 instance Eq (HalfSpace n) where
     (==) (Zeta n1 r1) (Zeta n2 r2) 
         | (unit n1 == unit n2) && (norm n1 * r1 == norm n2 * r2) = True
@@ -95,11 +98,14 @@ get_dual_interface :: (SingI n) => HalfSpace n -> (HalfSpace n, Vec n R)
 get_dual_interface (Zeta n r) = (Zeta (zeroVecs |-| n) (-r), (get_interface (Zeta n r)))
 
 
+
 -- Generates regions from a given set of halfspaces (without duals) that creates regions spanning R^n
 -- for example, if you had two halfspaces this would return you the four regions created by their intersections
+
 generate_Rn :: (SingI n) => [HalfSpace n] -> [Region n]
 generate_Rn [] = []
-generate_Rn (h:hs) = ([h]: rs) ++ ([get_dual h]: rs) where
+generate_Rn (h:[]) = [[h], [get_dual h]]
+generate_Rn (h:hs) = ((h:) <$> rs) ++ ((get_dual h :) <$> rs) where
     rs = (generate_Rn hs)
 
 -- Gets the interfaces that border a given region and a vector on that interface

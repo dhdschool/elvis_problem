@@ -59,7 +59,7 @@ fromIntegerNat n = S (fromIntegerNat (n-1))
 
 fromIntegerUnsafe :: (Integral b) => b -> SNat n
 fromIntegerUnsafe n
-    | n < 0 = error "Negative size provided to an natural type level number"
+    | n < 0 = error "Negative size provided to a natural type-level number"
     | n == 0 = unsafeCoerce SZ
     | otherwise = unsafeCoerce $ SS (fromIntegerUnsafe (n-1))
     
@@ -247,6 +247,9 @@ generate = generate_ sing
 
 -- Use these functions with care, they aren't guaranteed to return you a vector because a list may be of any size
 -- whereas a particular vector may be of only one size
+
+-- This function is empirically determined to be safe at runtime as lists cannot have negative sizes
+-- and fromIntegerUnsafe is only unsafe for negative integers
 
 fromListSafe :: [a] -> (Vec n a, Sing n)
 fromListSafe lst = (fromJust $ fromListExplicit size lst, size) where

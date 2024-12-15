@@ -39,7 +39,7 @@ import RealMatrix
 import Data.Singletons
 import Proj (precision_)
 import Graph 
-import Data.Foldable (minimumBy, Foldable (toList))
+import Data.Foldable (Foldable (toList))
 
 type ElvisData n = [(Vec n R, VSet n, Region n)]
 
