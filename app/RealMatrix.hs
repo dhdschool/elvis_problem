@@ -87,6 +87,7 @@ mat_scalar_mult_ = \case
     SS l -> \t -> \(x:#xs) -> (t|*|x) :# (mat_scalar_mult_ l t xs)
 
 instance (SingI m, RealVec (Vec n R), SingI n) => RealMat (Matrix m n) where
+
     (#+#) a b = mat_add_ sing a b
     (#-#) a b = mat_sub_ sing a b
     scal t a = mat_scalar_mult_ sing t a

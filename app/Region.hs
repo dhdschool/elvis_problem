@@ -127,3 +127,13 @@ region_from_points_ _ _ = []
 
 region_from_points :: (RealVec (Vec n R), SingI n) => VelocityRegions n -> Vec n R -> Region n 
 region_from_points rmap x = region_from_points_ (HashMap.keys rmap) x
+
+init_velocities :: (SingI n) => [Region n] -> [VSet n] -> Maybe (VelocityRegions n)
+init_velocities r_lst v_lst
+    | length (r_lst) == length (v_lst) = Just rmap 
+    | otherwise = Nothing where
+        rmap = foldr HashMap.union HashMap.empty (((HashMap.insert <$> r_lst) <*> v_lst) <*> pure HashMap.empty)
+
+get_adjacents :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
+get_adjacents region x0 x1 = filter (\(_, v) -> norm (v|-|x1) < norm (x0|-|x1)) (get_adjacent_region region)
+

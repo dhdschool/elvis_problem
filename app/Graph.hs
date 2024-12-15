@@ -32,7 +32,6 @@ import FixedVector
 import RealVector
 import ConvexSet
 import Region
-import Elvis
 
 import qualified Data.HashMap.Strict as HashMap
 

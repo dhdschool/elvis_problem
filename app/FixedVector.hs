@@ -34,6 +34,8 @@ import           Data.Kind
 import           Data.Singletons
 import           Data.Singletons.TH
 import           Data.Singletons.Base.TH
+import Data.Maybe (fromJust)
+import Unsafe.Coerce
 
 
 
@@ -41,8 +43,32 @@ import           Data.Singletons.Base.TH
 -- This defines singleton types for all natural numbers at compile time
 $(singletons [d|
   data Nat = Z | S Nat
-    deriving Eq
+    deriving Eq    
   |])
+
+instance Show Nat where
+    show Z = "Z"
+    show (S n) = "S " ++ show n
+
+fromIntegerNat :: (Integral b) => b -> Nat
+
+fromIntegerNat 0 = Z
+fromIntegerNat n = S (fromIntegerNat (n-1))
+
+
+fromIntegerUnsafe :: (Integral b) => b -> SNat n
+fromIntegerUnsafe 0 = unsafeCoerce SZ
+fromIntegerUnsafe n = unsafeCoerce $ SS (fromIntegerUnsafe (n-1)) 
+    
+instance Show (SNat n) where
+    show SZ = "SZ"
+    show (SS l) = "SS " ++ show l 
+
+-- instance Num (SNat 'Z) where
+--     fromInteger _ = SZ
+
+-- instance (Num (SNat n)) => Num (SNat ('S n)) where
+--     fromInteger a = SS (fromInteger (a - 1))
 
 -- This is a conversion between integer literals and their successor natural equivalents on the type level
 type family Lit (n :: GHC.TypeLits.Nat) :: Nat where
@@ -203,8 +229,12 @@ generate = generate_ sing
 -- Use these functions with care, they aren't guaranteed to return you a vector because a list may be of any size
 -- whereas a particular vector may be of only one size
 
+fromListSafe :: [a] -> (Vec n a, Sing n)
+fromListSafe lst = (fromJust $ fromListExplicit size lst, size) where
+    size = fromIntegerUnsafe (length lst)
+
 -- Return a vector of a given size if given a list of that size, otherwise return Nothing
-fromListExplicit :: Sing n -> [a] -> Maybe (Vec n a)
+fromListExplicit :: Sing n -> [a] -> Maybe ((Vec n a))
 fromListExplicit = \case
     SZ -> \case
         [] -> Just Nil
