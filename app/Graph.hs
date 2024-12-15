@@ -45,18 +45,19 @@ type Node n = [Interface n]
 get_adjacents_strict :: (SingI n) => HashSet.HashSet (Region n) -> Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
 get_adjacents_strict visited region x0 x1 = filter (\(r, _) -> HashSet.member r visited == False) (get_adjacents region x0 x1)
 
-construct_graph_ :: (SingI n) => HashSet.HashSet (Region n) -> Graph n -> (Vec n R, Vec n R) -> Region n -> Graph n
-construct_graph_ visited_old graph (x0, x1) start
+construct_graph_ :: (SingI n) => HashSet.HashSet (Region n) -> Graph n -> (Vec n R, Vec n R) -> Region n -> Region n -> Graph n
+construct_graph_ visited_old graph (x0, x1) end start
     | HashMap.member start graph = graph
+    | start == end = HashMap.union graph (HashMap.insert end [] HashMap.empty)
     | otherwise = return_graph  where
     visited_new = HashSet.insert start visited_old
-    return_graph = foldr HashMap.union (HashMap.empty) ((construct_graph_ visited_new new_graph (x0, x1)) <$> adjacent_regions)
+    return_graph = foldr HashMap.union (HashMap.empty) ((construct_graph_ visited_new new_graph (x0, x1) end) <$> adjacent_regions)
     new_graph = HashMap.insert start interfaces graph
     interfaces = get_adjacents_strict visited_new start x0 x1
     (adjacent_regions, _) = unzip interfaces
 
 construct_graph :: (SingI n) => VelocityRegions n -> Vec n R -> Vec n R -> Graph n
-construct_graph regions x0 x1 = construct_graph_ HashSet.empty HashMap.empty (x0, x1) (region_from_points regions x0)
+construct_graph regions x0 x1 = construct_graph_ HashSet.empty HashMap.empty (x0, x1) (region_from_points regions x1)(region_from_points regions x0)
 
 get_velocity_set :: (SingI n) => Region n -> VelocityRegions n -> Maybe (VSet n)
 get_velocity_set region rmap = HashMap.lookup region rmap
@@ -64,6 +65,10 @@ get_velocity_set region rmap = HashMap.lookup region rmap
 
 search_graph :: (SingI n) => Region n -> Graph n -> (Maybe (Node n))
 search_graph search graph = HashMap.lookup search graph
+
+
+-- This method could be memoized for increased efficiency, but since the elvis problem has to use each individual path
+-- (effectively 2^n * estimation_cost) the time consumption will bottleneck there regardless 
 
 get_all_paths_ :: (SingI n) => Node n -> VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n, Region n)]]
 get_all_paths_ [] _ _ _ _ = Just [[]]

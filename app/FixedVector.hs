@@ -51,7 +51,6 @@ instance Show Nat where
     show (S n) = "S " ++ show n
 
 fromIntegerNat :: (Integral b) => b -> Nat
-
 fromIntegerNat 0 = Z
 fromIntegerNat n = S (fromIntegerNat (n-1))
 
@@ -105,6 +104,13 @@ data Vec :: Nat -> Type -> Type where
 instance (Show a) => Show (Vec n a) where
     show Nil = "Nil\n"
     show (x:#xs) = (show x) ++ (":#") ++ (show xs)
+
+instance Show (Vec n a -> a) where
+    show _ = "Vector-valued function"
+
+instance Show (Vec m (Vec n a) -> a) where
+    show _ = "Matrix-valued function"
+
 
 infixr 5 :#
 

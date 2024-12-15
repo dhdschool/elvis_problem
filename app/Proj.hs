@@ -85,7 +85,7 @@ directional_identification f = v where
 
 
 test_func :: Vec (Lit 2) R -> R
-test_func v = (index (dim 1) v)^(2::Integer) + (((index (dim 1) v) + 1)^(2::Integer))/4 - 1
+test_func v = (index (dim 0) v)^(2::Integer) + (((index (dim 1) v) + 1)^(2::Integer))/4 - 1
 
 
 test_v :: Vec (Lit 2) R
@@ -156,7 +156,9 @@ estimate_y_ b episilon g y0 x
 -- x, g are assumed to be uncentered - this is the public wrapper
 -- Additionally, g maps to R1, hence only one constraint is imposed
 single_proj :: (RealVec (Vec n R), SingI n) => (Vec n R -> R) -> Vec n R -> Vec n R
-single_proj g x = y where
+single_proj g x
+    | g x <= 0 = x
+    | otherwise = y where
     y = up $ estimate_y (g_centered) (down x)
     (up, down, g_centered) = recenter g
 

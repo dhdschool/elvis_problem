@@ -34,11 +34,13 @@ import RealVector
 import Proj
 
 import Data.Singletons ( SingI(..) )
+import Data.Foldable (maximumBy)
 
 --VSet stands for Vector Set, has m constraints
 --type VSet m n = Vec m (Vec n R -> R)
 type MinkowskiSum n = [Vec n R -> R]
 type VSet n = [(MinkowskiSum n)]
+
 
 --CSet stands for Convex sets, this typeclass defines operations on convex sets
 class (RealVec (Vec n R)) => CSet n where
@@ -60,11 +62,11 @@ contains_inter v (f:fs) = ((contains_add f v)) && contains_inter v fs
     
 
 -- function to determine which vector in a list of vectors has the highest norm
-maxVec :: (SingI n) => (Vec n R -> R) -> Vec n R -> [Vec n R] -> Vec n R
-maxVec _ _ [] = zeroVecs
-maxVec compare_f x (v:vs)
-    | norm (x |-| v) >= norm (maxVec compare_f x (vs)) = v
-    | otherwise = maxVec compare_f x vs
+-- maxVec :: (SingI n) => (Vec n R -> R) -> Vec n R -> [Vec n R] -> Vec n R
+-- maxVec _ _ [] = zeroVecs
+-- maxVec compare_f x (v:vs)
+--     | compare_f (x |-| v) >= compare_f (maxVec compare_f x (vs)) = v
+--     | otherwise = maxVec compare_f x vs
 
 
 instance (SingI n, RealVec (Vec n R)) => CSet n where
@@ -81,7 +83,7 @@ instance (SingI n, RealVec (Vec n R)) => CSet n where
     proj g v
         | (contains v g) = v
         | otherwise = y where
-            y = maxVec (norm) v gs
+            y = maximumBy (\i -> \j -> compare (norm $ v|-|i) (norm $ v|-|j)) gs 
             gs = (minkowskiProjections <$> g)
             minkowskiProjections f = foldr (|+|) zeroVecs ((single_proj <$> f) <*> pure v)
     

@@ -1,5 +1,5 @@
 module Main where
-
+import Test
 
 main :: IO ()
-main = putStrLn "Hello, Haskell"
+main = putStrLn $ show test_out

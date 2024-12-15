@@ -32,9 +32,9 @@ module Region where
 import FixedVector
 import RealVector
 import ConvexSet
+
 import Data.Hashable
 import Data.Singletons
-import Data.List (permutations)
 import Data.Kind (Type)
 import qualified Data.HashMap.Strict as HashMap
 
@@ -138,8 +138,8 @@ init_velocities :: (SingI n) => [Region n] -> [VSet n] -> Maybe (VelocityRegions
 init_velocities r_lst v_lst
     | length (r_lst) == length (v_lst) = Just rmap 
     | otherwise = Nothing where
-        rmap = foldr HashMap.union HashMap.empty (((HashMap.insert <$> r_lst) <*> v_lst) <*> pure HashMap.empty)
+        rmap = foldr HashMap.union HashMap.empty (((uncurry HashMap.insert <$> (zip r_lst v_lst) )) <*> pure HashMap.empty)
 
 get_adjacents :: (SingI n, RealVec (Vec n R)) => Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
-get_adjacents region x0 x1 = filter (\(_, v) -> norm (v|-|x1) < norm (x0|-|x1)) (get_adjacent_region region)
+get_adjacents region x0 x1 = filter (\(_, v) -> pnorm 1 (v|-|x1) < pnorm 1 (x0|-|x1)) (get_adjacent_region region)
 

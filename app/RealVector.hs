@@ -1,4 +1,3 @@
-
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DefaultSignatures#-}
 {-# LANGUAGE EmptyCase#-}
@@ -25,7 +24,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# Language MultiParamTypeClasses#-}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
-
 
 module RealVector where
 
