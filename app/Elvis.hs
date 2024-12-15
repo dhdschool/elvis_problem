@@ -51,7 +51,7 @@ cost_function_single :: (RealVec (Vec n R), CSet n) => Region n -> VSet n -> Vec
 cost_function_single sigma g start end = (norm (end |-| start) / norm (proj g (end |-| start))) + (indicator_function error_punish sigma end) 
 
 -- Generalized cost function of the cost function above (matrix valued function)
-cost_function :: (RealVec (Vec n R), RealMat (Matrix (S m) n), CSet n, SingI (S m), Applicative (Vec m)) =>
+cost_function :: (RealVec (Vec n R), RealMat (Matrix (S m) n), CSet n, SingI m, Applicative (Vec m)) =>
   Vec n R -> Vec n R -> Vec (S (S m)) (Region n) -> Vec (S (S m)) (VSet n) -> Matrix (S m) n -> R
 cost_function x0 x1 sigma g m = cost_function_single sigma0 g0 x0 y0 + mat_cost + cost_function_single sigmaf gf yf x1 where
     y0 = getFirst m
@@ -106,7 +106,11 @@ elvis_single_multiple_interface x0 x1 data_list = (toList mf, cost mf, matrix_si
     ((m0, g, r), SS matrix_size) = to_matrix_and_constraints data_list
     mf = withSingI matrix_size (matrix_gradient_descent cost m0)
 
-    cost = withSingI matrix_size (cost_function x0 x1 r g)
+    size_minus_one :: (Sing (S n) -> Sing n)
+    size_minus_one = \case
+        SS l -> l
+
+    cost = withSingI (size_minus_one matrix_size) (cost_function x0 x1 r g)
 
 elvis_gen :: (SingI n) =>
     Vec n R -> Vec n R -> [ElvisData n] -> ([Vec n R], R)

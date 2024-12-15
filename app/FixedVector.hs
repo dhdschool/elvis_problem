@@ -55,10 +55,13 @@ fromIntegerNat :: (Integral b) => b -> Nat
 fromIntegerNat 0 = Z
 fromIntegerNat n = S (fromIntegerNat (n-1))
 
+-- This will return a runtime error if provided a negative integer to represent a nat
 
 fromIntegerUnsafe :: (Integral b) => b -> SNat n
-fromIntegerUnsafe 0 = unsafeCoerce SZ
-fromIntegerUnsafe n = unsafeCoerce $ SS (fromIntegerUnsafe (n-1)) 
+fromIntegerUnsafe n
+    | n < 0 = error "Negative size provided to an natural type level number"
+    | n == 0 = unsafeCoerce SZ
+    | otherwise = unsafeCoerce $ SS (fromIntegerUnsafe (n-1))
     
 instance Show (SNat n) where
     show SZ = "SZ"
@@ -112,16 +115,32 @@ instance Functor (Vec n) where
     fmap _ Nil = Nil
     fmap f (x:#xs) = f x :# (f <$> xs)
 
-instance Applicative (Vec Z) where
-    pure _ = Nil
-    (<*>) _ _ = Nil
+pure_ :: Sing n -> a -> Vec n a
+pure_ = \case
+    SZ -> \_ -> Nil
+    SS l -> \x -> x :# (pure_ l x)
 
-instance (Applicative (Vec n)) => Applicative (Vec ('S n)) where
-    pure :: Applicative (Vec n) => a -> Vec (S n) a
-    pure x = x :# pure x
+liftA_ :: Sing n -> Vec n (a -> b) -> Vec n a -> Vec n b
+liftA_ = \case
+    SZ -> \_ -> \_ -> Nil
+    SS l -> \(fv:#fvs) -> \(v:#vs) -> fv v :# (liftA_ l fvs vs)
 
-    (<*>) :: Applicative (Vec n) => Vec (S n) (a -> b) -> Vec (S n) a -> Vec (S n) b
-    (<*>) (fv:#fvs) (v:#vs) = fv v :# (fvs <*> vs) 
+instance (SingI n) => Applicative (Vec n) where
+    pure :: a -> Vec n a
+    pure x = pure_ sing x
+
+    (<*>) :: Vec n (a -> b) -> Vec n a -> Vec n b
+    (<*>) fv v = liftA_ sing fv v
+-- instance Applicative (Vec Z) where
+--     pure _ = Nil
+--     (<*>) _ _ = Nil
+
+-- instance (Applicative (Vec n)) => Applicative (Vec ('S n)) where
+--     pure :: Applicative (Vec n) => a -> Vec (S n) a
+--     pure x = x :# pure x
+
+--     (<*>) :: Applicative (Vec n) => Vec (S n) (a -> b) -> Vec (S n) a -> Vec (S n) b
+--     (<*>) (fv:#fvs) (v:#vs) = fv v :# (fvs <*> vs) 
 
 deriving instance Foldable (Vec n)
 instance (Eq a) =>  Eq (Vec n a) where
