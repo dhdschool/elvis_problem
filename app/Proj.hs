@@ -37,7 +37,7 @@ import Data.Singletons
 -- One method to do this is transitioning the psuedo gradient descent for single approximations into a
 -- full matrix valued gradient descent for multiple constraints at once (this should improve speed massively)
 
-
+-- Estimation precisions, best case scenario will give you an error in the range of 1/(2^precision)
 precision_ :: R
 precision_ = 25
 

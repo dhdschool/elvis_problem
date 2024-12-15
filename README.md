@@ -52,7 +52,6 @@ which will make a new folder in your user directory and clone this GitHub reposi
 To install the libraries that this project depends on, run the command ```cabal build``` once in the directory of the repository (**ideally** /home/{username}/elvis_problem or some variant). After this is run, your installation is complete
 
 # Usage
-When this project is complete, will have main contain many functions that I deem suitably useful for creating constraints for various Elvis problems, but for now we have only the conglamerate of functions contained within the various files in the ```app/``` folder.
 
 Currently, the way I run this involves entering ```cabal repl``` into the terminal, which opens a "read-eval-print-loop" for Haskell. Once inside, any functions contained in the app folder files can be run after being imported (typically by entering the command ```import {filename}```) once in ghci. To exit the REPL, type ":q". An example of what this may be used for can look as follows
 
@@ -128,8 +127,7 @@ The graph file contains necessary functions for making graphs of all possible in
 
 ### Elvis
 
-This file contains the cost function and some helpful wrapper functions for solving the elvis problem. It is currently unfinished.
-
+This file contains the necessary methods to solve an assortment of types of elvis problem, from single interface to multiple constant interfaces to the generalized elvis problem. Currently the multiple interfaces (might?) work but are too slow and memory intensive to give an feasible results for any nontrivial problems.
 
 
 </div>

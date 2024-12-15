@@ -37,14 +37,19 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.HashSet as HashSet
 import Data.Singletons
 
-
+-- Some useful type aliases
 type Interface n = (Region n, Vec n R)
 type Graph n = HashMap.HashMap (Region n) (Node n)
 type Node n = [Interface n]
 
+-- Gets adjacent regions that are within a pnorm box of x0 and x1, but with the addtional constraint that they are not
+-- in a given set (this is used to disinclude already visted regions when searching for the x1 region)
 get_adjacents_strict :: (SingI n) => HashSet.HashSet (Region n) -> Region n -> Vec n R -> Vec n R -> [(Region n, Vec n R)]
 get_adjacents_strict visited region x0 x1 = filter (\(r, _) -> HashSet.member r visited == False) (get_adjacents region x0 x1)
 
+-- Internal graph constructor that searches for the x1 region from the x0 region,
+-- Every possible way to travel across these interfaces (which is guaranteed to be finite)
+-- will be checked using the cost function in Elvis
 construct_graph_ :: (SingI n) => HashSet.HashSet (Region n) -> Graph n -> (Vec n R, Vec n R) -> Region n -> Region n -> Graph n
 construct_graph_ visited_old graph (x0, x1) end start
     | HashMap.member start graph = graph
@@ -56,13 +61,15 @@ construct_graph_ visited_old graph (x0, x1) end start
     interfaces = get_adjacents_strict visited_new start x0 x1
     (adjacent_regions, _) = unzip interfaces
 
+-- External graph constructor, a little nice to use than the internal one above
 construct_graph :: (SingI n) => VelocityRegions n -> Vec n R -> Vec n R -> Graph n
 construct_graph regions x0 x1 = construct_graph_ HashSet.empty HashMap.empty (x0, x1) (region_from_points regions x1)(region_from_points regions x0)
 
+-- function alias for finding if a velocity set exists in a velocityset-region hashmap
 get_velocity_set :: (SingI n) => Region n -> VelocityRegions n -> Maybe (VSet n)
 get_velocity_set region rmap = HashMap.lookup region rmap
 
-
+-- function alias for finding if a node exists in a region-node hashmap
 search_graph :: (SingI n) => Region n -> Graph n -> (Maybe (Node n))
 search_graph search graph = HashMap.lookup search graph
 
@@ -70,6 +77,7 @@ search_graph search graph = HashMap.lookup search graph
 -- This method could be memoized for increased efficiency, but since the elvis problem has to use each individual path
 -- (effectively 2^n * estimation_cost) the time consumption will bottleneck there regardless 
 
+-- Internal function that gets every possible path to travel across the interfaces provided
 get_all_paths_ :: (SingI n) => Node n -> VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n, Region n)]]
 get_all_paths_ [] _ _ _ _ = Just [[]]
 
@@ -92,7 +100,7 @@ get_all_paths_ ((next_region, interface_vector):interface_tail) regions current_
         maybe_width = get_all_paths_ interface_tail regions current_region end_region graph
         maybe_node = (search_graph next_region graph)
 
-
+-- External function for the above function that does some parsing
 get_all_paths :: (SingI n) => VelocityRegions n -> Region n -> Region n -> Graph n -> Maybe [[(Vec n R, VSet n, Region n)]]
 get_all_paths regions start_region end_region graph = case maybe_vset of
     Nothing -> Nothing

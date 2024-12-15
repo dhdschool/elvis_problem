@@ -50,12 +50,8 @@ instance Show Nat where
     show Z = "Z"
     show (S n) = "S " ++ show n
 
-fromIntegerNat :: (Integral b) => b -> Nat
-fromIntegerNat 0 = Z
-fromIntegerNat n = S (fromIntegerNat (n-1))
 
 -- This will return a runtime error if provided a negative integer to represent a nat
-
 fromIntegerUnsafe :: (Integral b) => b -> SNat n
 fromIntegerUnsafe n
     | n < 0 = error "Negative size provided to a natural type-level number"
@@ -65,12 +61,6 @@ fromIntegerUnsafe n
 instance Show (SNat n) where
     show SZ = "SZ"
     show (SS l) = "SS " ++ show l 
-
--- instance Num (SNat 'Z) where
---     fromInteger _ = SZ
-
--- instance (Num (SNat n)) => Num (SNat ('S n)) where
---     fromInteger a = SS (fromInteger (a - 1))
 
 -- This is a conversion between integer literals and their successor natural equivalents on the type level
 type family Lit (n :: GHC.TypeLits.Nat) :: Nat where
@@ -121,6 +111,7 @@ instance Functor (Vec n) where
     fmap _ Nil = Nil
     fmap f (x:#xs) = f x :# (f <$> xs)
 
+-- Explicit Applicative typeclass definitions
 pure_ :: Sing n -> a -> Vec n a
 pure_ = \case
     SZ -> \_ -> Nil
@@ -137,17 +128,8 @@ instance (SingI n) => Applicative (Vec n) where
 
     (<*>) :: Vec n (a -> b) -> Vec n a -> Vec n b
     (<*>) fv v = liftA_ sing fv v
--- instance Applicative (Vec Z) where
---     pure _ = Nil
---     (<*>) _ _ = Nil
 
--- instance (Applicative (Vec n)) => Applicative (Vec ('S n)) where
---     pure :: Applicative (Vec n) => a -> Vec (S n) a
---     pure x = x :# pure x
-
---     (<*>) :: Applicative (Vec n) => Vec (S n) (a -> b) -> Vec (S n) a -> Vec (S n) b
---     (<*>) (fv:#fvs) (v:#vs) = fv v :# (fvs <*> vs) 
-
+-- Defining equality on vectors
 deriving instance Foldable (Vec n)
 instance (Eq a) =>  Eq (Vec n a) where
     (==) Nil Nil = True
@@ -161,13 +143,14 @@ zipVec = \case
     x:#xs -> \case
         y:#ys -> (x, y) :# zipVec xs ys
 
--- Takes a vector where each element is a pair and returns two vectors
+-- Takes a vector where each element is a double and returns two vectors
 unzipVec :: Vec n (a, b) -> (Vec n a, Vec n b)
 unzipVec = \case
     Nil -> (Nil, Nil)
     ((a, b):#vs) -> ((a:#as), (b:#bs)) where
         (as, bs) = unzipVec vs
 
+-- Takes a vector where each element is a triple and returns three vectors
 unzipVec3 :: Vec n (a, b, c) -> (Vec n a, Vec n b, Vec n c)
 unzipVec3 = \case
     Nil -> (Nil, Nil, Nil)
@@ -199,20 +182,24 @@ index = \case
     FS i -> \case
         _ :# xs -> index i xs
 
+--Indexing the first value in a vector
 getFirst :: Vec (S n) a -> a
 getFirst = \case
     (x:#_) -> x
 
+--Indexing the last value in a vector safely
 getLast :: Vec (S n) a -> a
 getLast = \case
     (x:#Nil) -> x
     (_:#xs) -> getLast_ xs
 
+--Internal method for retrieving last value, only safe when used from getLast
 getLast_ :: (Vec n a -> a)
 getLast_ = \case 
     (x:#Nil) -> x
     (_:#xs) -> getLast_ xs
 
+--Gets everything except the first value in a vector
 vecTail :: (SingI (S n)) => Vec (S n) a -> Vec n a
 vecTail x = vecTail_ sing x
 
@@ -221,6 +208,7 @@ vecTail_ = \case
     SS SZ -> \_ -> Nil
     SS (SS l) -> \(x:#xs) -> x :# (vecTail_ (SS l) xs)
 
+--Gets everything except the last value in a vector
 reverseTail_ :: Sing (S n) -> Vec (S n) a -> Vec n a
 reverseTail_ = \case
     SS SZ -> \(_:#Nil) -> Nil
@@ -281,5 +269,6 @@ vecPairs_ = \case
     SS SZ -> \_ -> \_ -> Nil
     SS (SS l) -> \f -> \(x:#(x2:#xs)) -> (f x2 x) :# vecPairs_ (SS l) f (x2:#xs)
  
+-- Takes in a binary function and applies it to adjacent elements in a vector
 vecPairs :: (SingI (S n)) => (a -> a -> a) -> (Vec (S n) a) -> Vec n a
 vecPairs f x = vecPairs_ sing f x 

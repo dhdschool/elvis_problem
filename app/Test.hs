@@ -37,6 +37,8 @@ import RealMatrix
 import Data.Maybe (fromJust)
 import Unsafe.Coerce
 
+-- This module provides a list of test functions for this project, as well as an example of how to use certain functions
+
 test_space_x :: HalfSpace (Lit 2)
 test_space_x = Zeta (0:#1:#Nil) 0
 

@@ -70,7 +70,7 @@ class RealMat m where
     mat_dirDerivative :: (m -> R) -> m -> m -> R
     mat_grad :: (m -> R) -> m -> m
 
-
+-- Below are explicit methods for matrix operations
 mat_add_ :: (RealVec (Vec n R)) => Sing m -> Matrix m n -> Matrix m n -> Matrix m n
 mat_add_ = \case
     SZ -> \_ -> \_ -> Nil
@@ -87,7 +87,7 @@ mat_scalar_mult_ = \case
     SS l -> \t -> \(x:#xs) -> (t|*|x) :# (mat_scalar_mult_ l t xs)
 
 instance (SingI m, RealVec (Vec n R), SingI n) => RealMat (Matrix m n) where
-
+    -- Corresponding implicit methods, these are very similar to the ones found in RealVector.hs
     (#+#) a b = mat_add_ sing a b
     (#-#) a b = mat_sub_ sing a b
     scal t a = mat_scalar_mult_ sing t a

@@ -69,15 +69,14 @@ cost_function x0 x1 sigma g m = cost_function_single sigma0 g0 x0 y0 + mat_cost 
     mat_cost = (sum $ liftA2 (/) dist velocity) + errors
     errors = sum (((indicator_function error_punish) <$> sigmas) <*> differences)
 
-
+-- Rather than infinity, this function penalizes a vector that is not on an interface by some constant c
 indicator_function :: (RealVec (Vec n R)) => R -> Region n -> Vec n R -> R
 indicator_function cost region x = cost * min_dist where
     min_dist = minimum (abs <$> (( (from_halfspace) <$> region) <*> pure x))
 
+
 --Because this function is convex, gradient descent is guaranteed to converge (and we can do so rather fast using
 -- exponential/binary search)
-
--- Upon writing this I realize that my previous approximation methods are contrived versions of gradient descent
 
 gradient_descent_ :: (RealVec (Vec n R)) => R -> (Vec n R -> R) -> (Vec n R -> Vec n R) -> Vec n R -> R -> Vec n R
 gradient_descent_ b cost gradient y0 episilon
@@ -97,6 +96,7 @@ elvis_single g0 x0 g1 x1 h = gradient_descent cost y where
     y = get_interface h
     cost v = (cost_function_single [h] g0 x0 v) + (cost_function_single [Zeta x1 ((norm x1) ** 2)] g1 v x1)
 
+--Solves the elvis problem with a list of interfaces to cross over and their corresponding velocity sets
 elvis_single_multiple_interface :: (RealVec (Vec n R), CSet n, SingI n) =>
     Vec n R -> Vec n R -> ElvisData n -> ([Vec n R], R, Sing (S m))
 
@@ -110,6 +110,7 @@ elvis_single_multiple_interface x0 x1 data_list = (toList mf, cost mf, matrix_si
 
     cost = withSingI (size_minus_one matrix_size) (cost_function x0 x1 r g)
 
+-- Solves the generalized elvis problem given a list of paths and their associated velocity sets
 elvis_gen :: (SingI n) =>
     Vec n R -> Vec n R -> [ElvisData n] -> ([Vec n R], R)
 
@@ -125,6 +126,9 @@ elvis_gen x0 x1 (constraint_data:list_tail)
     
 elvis_gen _ _ _ = ([], 0)
 
+
+-- Internal function for converting a list into a matrix for use in matrix gradient descent
+-- This required some (in my opinion) tricky usage of dependent types 
 
 to_matrix_and_constraints :: (SingI n) => ElvisData n -> ((Matrix m n, Vec (S m) (VSet n), Vec (S m) (Region n)), Sing (S m))
 to_matrix_and_constraints lst = ((interfaces, sets, regions), size)
